@@ -9,5 +9,12 @@ public class GASDemo : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput" });
+
+		PrivateIncludePaths.Add("GASDemo/");
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks",
+		});
 	}
 }
