@@ -46,7 +46,7 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	class UInputAction* LookAction;
 	
 public:
-	AGD_CharacterBase();
+	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
 
 	virtual void PostInitializeComponents() override;
 	

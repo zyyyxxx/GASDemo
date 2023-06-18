@@ -19,8 +19,11 @@
 #include "GASDemo/AbilitySystem/Components/GD_AbilitySystemComponent.h"
 
 #include "Net/UnrealNetwork.h"
+#include "ActorComponents/GD_CharacterMovementComponent.h"
 
-AGD_CharacterBase::AGD_CharacterBase()
+
+AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer):
+	Super(ObjectInitializer.SetDefaultSubobjectClass<UGD_AbilitySystemComponent>(ACharacter::CharacterMovementComponentName)) // 修改父类组件创建类型
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -62,6 +65,7 @@ AGD_CharacterBase::AGD_CharacterBase()
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("AttributeSet"));
+	
 }
 
 void AGD_CharacterBase::PostInitializeComponents()
