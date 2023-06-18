@@ -28,7 +28,7 @@ public:
 	ATTRIBUTE_ACCESSORS(UGD_AttributeSet, MaxHealth)
 
 protected:
-	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
 	UFUNCTION()
 	virtual void OnRep_Health(const FGameplayAttributeData& OldHealth);

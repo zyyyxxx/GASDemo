@@ -13,8 +13,12 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "ShaderPrintParameters.h"
+#include "DataAssets/CharacterDataAsset.h"
 #include "GASDemo/AbilitySystem/Attributes/GD_AttributeSet.h"
 #include "GASDemo/AbilitySystem/Components/GD_AbilitySystemComponent.h"
+
+#include "Net/UnrealNetwork.h"
 
 AGD_CharacterBase::AGD_CharacterBase()
 {
@@ -57,7 +61,17 @@ AGD_CharacterBase::AGD_CharacterBase()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("Attributes"));
+	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("AttributeSet"));
+}
+
+void AGD_CharacterBase::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	if(IsValid(CharacterDataAsset))
+	{
+		SetCharacterData(CharacterDataAsset->CharacterData);
+	}
 }
 
 UAbilitySystemComponent* AGD_CharacterBase::GetAbilitySystemComponent () const
@@ -71,27 +85,34 @@ bool AGD_CharacterBase::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 	if(!Effect.Get()) return false; // 检查是否valid
 
 	// MakeOutgoingSpec : Get an outgoing GameplayEffectSpec that is ready to be applied to other things
-	FGameplayEffectSpecHandle SpacHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect , 1 , InEffectContext);
+	
+	/*FGameplayEffectSpecHandle是GAS（Gameplay Ability System）中的一个句柄（Handle），用于表示游戏效果规范（Gameplay Effect Spec）的引用。
+	MakeOutgoingSpec方法创建一个用于应用游戏效果的规范（Spec）。
+	Effect是要应用的游戏效果的类（Class），1表示效果的等级（Level），InEffectContext是游戏效果的上下文（Context）。*/
+	
+	FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(Effect , 1 , InEffectContext);
+	
+	/*FActiveGameplayEffectHandle是GAS（Gameplay Ability System）中的另一个句柄（Handle），用于表示活动游戏效果（Active Gameplay Effect）的引用。
+	活动游戏效果是指已经应用于实体（例如角色）的游戏效果，即效果正在生效的状态。
+	每当应用游戏效果时，都会生成一个活动游戏效果，并返回一个对其的句柄，以便稍后对其进行管理和操作。
+	与FGameplayEffectSpecHandle不同，FActiveGameplayEffectHandle表示实际生效的游戏效果，而不仅仅是游戏效果规范。
+	您可以使用句柄来检查、更新或移除活动游戏效果，例如修改效果参数、查询其状态、延长或缩短持续时间等。*/
+
+	if(SpecHandle.IsValid())
+	{
+		FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+
+		return ActiveGEHandle.WasSuccessfullyApplied();
+	}
 	
 	return false;
-}
-
-void AGD_CharacterBase::InitializeAttributes()
-{
-	if(GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet) //是服务端
-	{
-		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext(); // 创建EffectContext
-		EffectContext.AddSourceObject(this); // Sets the object this effect was created from.
-
-		ApplyGameplayEffectToSelf(DefaultAttributeSet , EffectContext);
-	}
 }
 
 void AGD_CharacterBase::GiveAbilities()
 {
 	if(HasAuthority() && AbilitySystemComponent)
 	{
-		for(auto DefaultAbility : DefaultAbilities)
+		for(auto DefaultAbility : CharacterData.Abilities)// 从存储的CharacterData中获取
 		{
 			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(DefaultAbility));
 		}
@@ -100,12 +121,12 @@ void AGD_CharacterBase::GiveAbilities()
 
 void AGD_CharacterBase::ApplyStartupEffects()
 {
-	if(GetLocalRole() == ROLE_Authority && DefaultAttributeSet && AttributeSet) //是服务端
+	if(GetLocalRole() == ROLE_Authority) // Authoritative control over the actor
 	{
 		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext(); // 创建EffectContext
 		EffectContext.AddSourceObject(this); // Sets the object this effect was created from.
 
-		for(auto CharacterEffect: DefaultEffects)
+		for(auto CharacterEffect: CharacterData.Effects) // 从存储的CharacterData中获取
 		{
 			ApplyGameplayEffectToSelf(CharacterEffect , EffectContext);
 		}
@@ -120,8 +141,6 @@ void AGD_CharacterBase::PossessedBy(AController* NewController)
 	// Server Initialization
 
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
-
-	InitializeAttributes();
 	
 	GiveAbilities();
 	ApplyStartupEffects();
@@ -133,10 +152,7 @@ void AGD_CharacterBase::OnRep_PlayerState()
 	// Client Initialization
 
 	AbilitySystemComponent->InitAbilityActorInfo(this,this);
-
-	InitializeAttributes();
 }
-
 
 
 
@@ -155,6 +171,8 @@ void AGD_CharacterBase::BeginPlay()
 		}
 	}
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -215,3 +233,32 @@ void AGD_CharacterBase::Look(const FInputActionValue& Value)
 }
 
 
+
+FCharacterData AGD_CharacterBase::GetCharacterData() const
+{
+	return CharacterData;
+}
+
+void AGD_CharacterBase::SetCharacterData(const FCharacterData& InCharacterData)
+{
+	CharacterData = InCharacterData;
+	InitFromCharacterData(CharacterData);
+}
+
+
+void AGD_CharacterBase::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)
+{
+	
+}
+
+void AGD_CharacterBase::OnRep_CharacterData()
+{
+	InitFromCharacterData(CharacterData , true);
+}
+
+void AGD_CharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AGD_CharacterBase , CharacterData);
+}

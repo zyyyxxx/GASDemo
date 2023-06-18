@@ -6,9 +6,9 @@
 #include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
 
-void UGD_AttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+void UGD_AttributeSet::PostGameplayEffectExecute(const  struct FGameplayEffectModCallbackData& Data)
 {
-	// ostGameplayEffectExecute仅在instantGE使Attribute的 BaseValue改变时触发
+	// PostGameplayEffectExecute仅在instantGE使Attribute的 BaseValue改变时触发
 	Super::PostGameplayEffectExecute(Data);
 	if(Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
@@ -23,7 +23,7 @@ void UGD_AttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth)
 
 void UGD_AttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UGD_AttributeSet , Health , OldMaxHealth);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UGD_AttributeSet , MaxHealth , OldMaxHealth);
 }
 
 void UGD_AttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const

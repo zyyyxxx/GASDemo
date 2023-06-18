@@ -7,6 +7,7 @@
 #include "InputActionValue.h"
 #include "Abilities/GameplayAbility.h"
 #include "AbilitySystemInterface.h"
+#include "GameTypes.h"
 #include "GD_CharacterBase.generated.h"
 
 class UGD_AbilitySystemComponent;
@@ -46,27 +47,22 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	
 public:
 	AGD_CharacterBase();
+
+	virtual void PostInitializeComponents() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect , FGameplayEffectContextHandle InEffectContext);
 protected:
 
-	void InitializeAttributes();//角色初始化Attribute
+
 	void GiveAbilities(); //角色给予Ability
 	void ApplyStartupEffects();
 
 	virtual void PossessedBy(AController* NewController) override; //client
 	virtual void OnRep_PlayerState() override; //server
 
-	UPROPERTY(BlueprintReadOnly , EditDefaultsOnly , Category = "GAS")
-	TSubclassOf<UGameplayEffect> DefaultAttributeSet; // 默认Attribute属性 注意是GE，我们不应该直接修改Attribute
-
-	UPROPERTY(BlueprintReadOnly , EditDefaultsOnly , Category = "GAS")
-	TArray<TSubclassOf<UGameplayAbility>> DefaultAbilities;  
 	
-	UPROPERTY(BlueprintReadOnly , EditDefaultsOnly , Category = "GAS")
-	TArray<TSubclassOf<UGameplayEffect>> DefaultEffects;
 	
 	UPROPERTY(EditDefaultsOnly)
 	UGD_AbilitySystemComponent* AbilitySystemComponent;
@@ -96,4 +92,24 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+public:
+	// FCharacterData 接口函数
+	UFUNCTION(BlueprintCallable)
+	FCharacterData GetCharacterData() const;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCharacterData(const FCharacterData& InCharacterData);
+
+protected:
+	
+	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
+	FCharacterData CharacterData;
+
+	UFUNCTION()
+	void OnRep_CharacterData();
+
+	virtual void InitFromCharacterData(const FCharacterData& InCharacterData , bool bFromReplication = false);
+
+	UPROPERTY(EditDefaultsOnly)
+	class UCharacterDataAsset* CharacterDataAsset;
 };
