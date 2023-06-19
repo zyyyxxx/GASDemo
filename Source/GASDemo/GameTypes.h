@@ -15,4 +15,20 @@ struct FCharacterData
 
 	UPROPERTY(BlueprintReadOnly , EditAnywhere , Category = "GAS")
 	TArray<TSubclassOf<class UGameplayAbility>> Abilities;
+
+	UPROPERTY(BlueprintReadOnly , EditAnywhere , Category = "Animation")
+	class UCharacterAnimDataAsset* CharacterAnimDataAsset;
+};
+
+USTRUCT(BlueprintType)
+struct FCharacterAnimationData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	class UBlendSpace* MovementBlendSpace = nullptr;
+
+	UPROPERTY(EditDefaultsOnly)
+	class UAnimSequenceBase* IdleAnimationAsset = nullptr;
+	
 };
