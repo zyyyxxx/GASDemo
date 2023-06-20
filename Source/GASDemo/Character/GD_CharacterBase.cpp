@@ -14,6 +14,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "ShaderPrintParameters.h"
+#include "ActorComponents/FootstepsComponent.h"
 #include "DataAssets/CharacterDataAsset.h"
 #include "GASDemo/AbilitySystem/Attributes/GD_AttributeSet.h"
 #include "GASDemo/AbilitySystem/Components/GD_AbilitySystemComponent.h"
@@ -65,6 +66,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("AttributeSet"));
+
+	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
 	
 }
 
@@ -249,6 +252,10 @@ void AGD_CharacterBase::SetCharacterData(const FCharacterData& InCharacterData)
 	InitFromCharacterData(CharacterData);
 }
 
+UFootstepsComponent* AGD_CharacterBase::GetFootstepComponent() const
+{
+	return FootstepsComponent;
+}
 
 void AGD_CharacterBase::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)
 {

@@ -44,6 +44,8 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
+
+	
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -69,7 +71,7 @@ protected:
 
 	UPROPERTY(Transient)
 	UGD_AttributeSet* AttributeSet;
-	
+
 	
 	
 	/** Called for movement input */
@@ -100,6 +102,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetCharacterData(const FCharacterData& InCharacterData);
 
+	class UFootstepsComponent* GetFootstepComponent() const;
+
 protected:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_CharacterData)
@@ -112,4 +116,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	class UCharacterDataAsset* CharacterDataAsset;
+
+	UPROPERTY(BlueprintReadOnly)
+	class UFootstepsComponent* FootstepsComponent;
 };
