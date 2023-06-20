@@ -115,6 +115,17 @@ bool AGD_CharacterBase::ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> E
 	return false;
 }
 
+void AGD_CharacterBase::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if(AbilitySystemComponent)
+	{
+		// 利用Tag移除GE
+		AbilitySystemComponent->RemoveActiveEffectsWithTags(InAirTags);
+	}
+}
+
 void AGD_CharacterBase::GiveAbilities()
 {
 	if(HasAuthority() && AbilitySystemComponent)
@@ -190,8 +201,8 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnJumpStarted);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnJumpEnded);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::Move);
@@ -239,6 +250,20 @@ void AGD_CharacterBase::Look(const FInputActionValue& Value)
 	}
 }
 
+void AGD_CharacterBase::OnJumpStarted(const FInputActionValue& Value)
+{
+	FGameplayEventData PayLoad;
+	PayLoad.Instigator = this;
+	PayLoad.EventTag = JumpEventTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , JumpEventTag ,PayLoad);
+	
+}
+
+void AGD_CharacterBase::OnJumpEnded(const FInputActionValue& Value)
+{
+	
+}
 
 
 FCharacterData AGD_CharacterBase::GetCharacterData() const
