@@ -20,7 +20,9 @@ class GASDEMO_API UGA_Jump : public UGD_GameplayAbility
 
 protected:
 
+	/* 已经移至基类
 	UPROPERTY(EditDefaultsOnly , Category = "Effects")
 	TSubclassOf<UGameplayEffect> JumpEffect;
+	*/
 
 };

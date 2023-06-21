@@ -36,11 +36,14 @@ void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 		{
 			return;
 		}
-	
+
+		Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+		
 		ACharacter* Character = CastChecked<ACharacter>(ActorInfo->AvatarActor.Get() , ECastCheckedType::NullAllowed);
 		Character->Jump();
 		//以上是自带的JumpGA的代码
 
+		/* 此处功能已在基类中实现
 		//我们添加应用GE的功能
 		//获取ASC
 		if(UAbilitySystemComponent* AbilityComponent = ActorInfo->AbilitySystemComponent.Get())
@@ -54,9 +57,9 @@ void UGA_Jump::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FG
 				FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 				if(!ActiveGEHandle.WasSuccessfullyApplied())
 				{
-					UE_LOG(LogTemp , Error , TEXT("Faild to apple jump effect! %s") , *GetNameSafe(Character));
+					UE_LOG(LogTemp , Error , TEXT("Faild to apply jump effect! %s") , *GetNameSafe(Character));
 				}
 			}
-		}
+		}*/
 	}
 }
