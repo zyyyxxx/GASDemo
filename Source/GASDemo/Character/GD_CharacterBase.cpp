@@ -13,6 +13,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemLog.h"
 #include "ShaderPrintParameters.h"
 #include "ActorComponents/FootstepsComponent.h"
 #include "DataAssets/CharacterDataAsset.h"
@@ -126,6 +127,37 @@ void AGD_CharacterBase::Landed(const FHitResult& Hit)
 	}
 }
 
+void AGD_CharacterBase::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	
+	if(!CrouchStateEffect.Get()) return;
+
+	if(AbilitySystemComponent)
+	{
+		FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+		FGameplayEffectSpecHandle SpecHandle = AbilitySystemComponent->MakeOutgoingSpec(CrouchStateEffect , 1, EffectContext);
+		if(SpecHandle.IsValid())
+		{
+			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+			if(!ActiveGEHandle.WasSuccessfullyApplied())
+			{
+				ABILITY_LOG(Log , TEXT("Ability %s failed to apply startup effect %s! "), *GetName(),*GetNameSafe(CrouchStateEffect));
+			}
+		}
+	}
+}
+
+void AGD_CharacterBase::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	if(AbilitySystemComponent && CrouchStateEffect.Get())
+	{
+		//Remove active gameplay effects whose backing definition are the specified gameplay effect class
+		AbilitySystemComponent->RemoveActiveGameplayEffectBySourceEffect(CrouchStateEffect , AbilitySystemComponent);
+	}
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+}
+
 void AGD_CharacterBase::GiveAbilities()
 {
 	if(HasAuthority() && AbilitySystemComponent)
@@ -210,6 +242,9 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::Look);
 
+		//Crouch
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnCrouchStarted);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnCrouchEnded);
 	}
 
 }
@@ -256,13 +291,29 @@ void AGD_CharacterBase::OnJumpStarted(const FInputActionValue& Value)
 	PayLoad.Instigator = this;
 	PayLoad.EventTag = JumpEventTag;
 
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , JumpEventTag ,PayLoad);
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , JumpEventTag ,PayLoad); // 利用tag触发BP_GA_Jump的trigger
 	
 }
 
 void AGD_CharacterBase::OnJumpEnded(const FInputActionValue& Value)
 {
-	
+	// 跳跃结束移除GE的功能在GD_GA基类中实现了
+}
+
+void AGD_CharacterBase::OnCrouchStarted(const FInputActionValue& Value)
+{
+	if(AbilitySystemComponent)
+	{
+		AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchTags);	
+	}
+}
+
+void AGD_CharacterBase::OnCrouchEnded(const FInputActionValue& Value)
+{
+	if(AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&CrouchTags);
+	}
 }
 
 

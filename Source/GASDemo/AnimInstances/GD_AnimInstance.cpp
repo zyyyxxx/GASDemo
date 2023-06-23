@@ -38,3 +38,33 @@ UAnimSequenceBase* UGD_AnimInstance::GetIdleAnimation() const
 	}
 	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.IdleAnimationAsset : nullptr;
 }
+
+UBlendSpace* UGD_AnimInstance::GetCrouchLocomotionBlendSpace() const
+{
+	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
+	{
+		FCharacterData Data = GDCharacter->GetCharacterData();
+
+		if(Data.CharacterAnimDataAsset)
+		{
+			// 获取角色Data中的AnimDataAsset后获取Asset中的CharacterAnimationData中存储的运动混合空间
+			return Data.CharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendSpace;
+		}
+	}
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchMovementBlendSpace : nullptr;
+}
+
+UAnimSequenceBase* UGD_AnimInstance::GetCrouchIdleAnimation() const
+{
+	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
+	{
+		FCharacterData Data = GDCharacter->GetCharacterData();
+
+		if(Data.CharacterAnimDataAsset)
+		{
+			// 获取角色Data中的AnimDataAsset后获取Asset中的CharacterAnimationData中存储的运动混合空间
+			return Data.CharacterAnimDataAsset->CharacterAnimationData.CrouchIdleAnimationAsset;
+		}
+	}
+	return DefaultCharacterAnimDataAsset ? DefaultCharacterAnimDataAsset->CharacterAnimationData.CrouchIdleAnimationAsset : nullptr;
+}

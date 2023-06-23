@@ -45,7 +45,9 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	
+	/** Crouch Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* CrouchAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -57,6 +59,10 @@ public:
 	bool ApplyGameplayEffectToSelf(TSubclassOf<UGameplayEffect> Effect , FGameplayEffectContextHandle InEffectContext);
 
 	virtual void Landed(const FHitResult& Hit) override;
+
+	// 重载Crouch的功能
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 	
 protected:
 
@@ -86,7 +92,11 @@ protected:
 	
 	/** Called for jump input */
 	void OnJumpStarted(const FInputActionValue& Value);
-	void OnJumpEnded(const FInputActionValue& Value);		
+	void OnJumpEnded(const FInputActionValue& Value);
+
+	/** Called for crouch input */
+	void OnCrouchStarted(const FInputActionValue& Value);
+	void OnCrouchEnded(const FInputActionValue& Value);	
 
 protected:
 	// APawn interface
@@ -137,4 +147,12 @@ protected:
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer InAirTags;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer CrouchTags;
+
+	// Gameplay Effects
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> CrouchStateEffect;
 };
