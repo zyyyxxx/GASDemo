@@ -43,7 +43,7 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = 250.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
@@ -67,6 +67,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
 	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("AttributeSet"));
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AGD_CharacterBase::OnMaxMovementChanged); // 注册函数到此速度attribute改变多播委托
 
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
 	
@@ -243,8 +245,12 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::Look);
 
 		//Crouch
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnCrouchStarted);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnCrouchStarted);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnCrouchEnded);
+		
+		//Sprint
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnSprintStarted);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnSprintEnded);
 	}
 
 }
@@ -316,6 +322,23 @@ void AGD_CharacterBase::OnCrouchEnded(const FInputActionValue& Value)
 	}
 }
 
+void AGD_CharacterBase::OnSprintStarted(const FInputActionValue& Value)
+{
+	if(AbilitySystemComponent)
+	{
+		AbilitySystemComponent->TryActivateAbilitiesByTag(SprintTags,true);
+	}
+}
+
+void AGD_CharacterBase::OnSprintEnded(const FInputActionValue& Value)
+{
+	if(AbilitySystemComponent)
+	{
+		AbilitySystemComponent->CancelAbilities(&SprintTags);
+		
+	}
+}
+
 
 FCharacterData AGD_CharacterBase::GetCharacterData() const
 {
@@ -331,6 +354,11 @@ void AGD_CharacterBase::SetCharacterData(const FCharacterData& InCharacterData)
 UFootstepsComponent* AGD_CharacterBase::GetFootstepComponent() const
 {
 	return FootstepsComponent;
+}
+
+void AGD_CharacterBase::OnMaxMovementChanged(const FOnAttributeChangeData& Data) 
+{
+	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
 }
 
 void AGD_CharacterBase::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)

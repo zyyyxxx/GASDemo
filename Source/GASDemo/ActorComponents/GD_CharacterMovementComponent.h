@@ -13,5 +13,4 @@ UCLASS()
 class GASDEMO_API UGD_CharacterMovementComponent : public UCharacterMovementComponent
 {
 	GENERATED_BODY()
-	
 };

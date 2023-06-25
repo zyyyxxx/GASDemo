@@ -48,6 +48,10 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	/** Crouch Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* CrouchAction;
+
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* SprintAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -96,7 +100,11 @@ protected:
 
 	/** Called for crouch input */
 	void OnCrouchStarted(const FInputActionValue& Value);
-	void OnCrouchEnded(const FInputActionValue& Value);	
+	void OnCrouchEnded(const FInputActionValue& Value);
+
+	/** Called for sprint input */
+	void OnSprintStarted(const FInputActionValue& Value);
+	void OnSprintEnded(const FInputActionValue& Value);	
 
 protected:
 	// APawn interface
@@ -120,6 +128,8 @@ public:
 	void SetCharacterData(const FCharacterData& InCharacterData);
 
 	class UFootstepsComponent* GetFootstepComponent() const;
+
+	void OnMaxMovementChanged(const FOnAttributeChangeData& Data);
 
 protected:
 	
@@ -151,8 +161,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer CrouchTags;
 
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTagContainer SprintTags;
+
 	// Gameplay Effects
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> CrouchStateEffect;
+
+	// Delegates
+protected:
+	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
 };
