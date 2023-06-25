@@ -19,7 +19,7 @@ void UGD_AttributeSet::PostGameplayEffectExecute(const  struct FGameplayEffectMo
 	{
 		SetHealth(FMath::Clamp(GetHealth() , 0.f , GetMaxHealth()));
 	}
-	else if(Data.EvaluatedData.Attribute == GetMaxMovementSpeedAttribute()) // 设置移动速度
+	/*else if(Data.EvaluatedData.Attribute == GetMaxMovementSpeedAttribute()) // 设置移动速度
 	{
 		ACharacter* OwningCharacter = Cast<ACharacter>(GetOwningActor());
 		UCharacterMovementComponent* CharacterMovement = OwningCharacter ? OwningCharacter->GetCharacterMovement() : nullptr;
@@ -30,7 +30,7 @@ void UGD_AttributeSet::PostGameplayEffectExecute(const  struct FGameplayEffectMo
 			
 			CharacterMovement->MaxWalkSpeed = MaxSpeed;
 		}
-	}
+	}*/
 }
 
 void UGD_AttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth)
