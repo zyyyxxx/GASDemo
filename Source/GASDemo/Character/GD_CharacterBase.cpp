@@ -22,6 +22,7 @@
 
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/GD_CharacterMovementComponent.h"
+#include "ActorComponents/GD_MotionWarpingComponent.h"
 
 
 AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer):
@@ -47,6 +48,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
+	GDCharacterMovementComponent = Cast<UGD_CharacterMovementComponent>(GetCharacterMovement());
+
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -71,6 +74,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AGD_CharacterBase::OnMaxMovementChanged); // 注册函数到此速度attribute改变多播委托
 
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
+
+	GDMotionWarpingComponent = CreateDefaultSubobject<UGD_MotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 	
 }
 
@@ -158,6 +163,11 @@ void AGD_CharacterBase::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeig
 		AbilitySystemComponent->RemoveActiveGameplayEffectBySourceEffect(CrouchStateEffect , AbilitySystemComponent);
 	}
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+}
+
+UGD_MotionWarpingComponent* AGD_CharacterBase::GetGdMotionWarpingComponent() const
+{
+	return GDMotionWarpingComponent;
 }
 
 void AGD_CharacterBase::GiveAbilities()
@@ -298,6 +308,11 @@ void AGD_CharacterBase::OnJumpStarted(const FInputActionValue& Value)
 	PayLoad.EventTag = JumpEventTag;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , JumpEventTag ,PayLoad); // 利用tag触发BP_GA_Jump的trigger
+
+	// 尝试Traversal
+	GDCharacterMovementComponent->TryTraversal(AbilitySystemComponent);
+
+
 	
 }
 

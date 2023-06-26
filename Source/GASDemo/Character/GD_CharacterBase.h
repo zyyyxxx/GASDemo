@@ -16,6 +16,9 @@ class UGD_AttributeSet;
 class UGameplayEffect;
 class UGameplayAbility;
 
+class UGD_MotionWarpingComponent;
+class UGD_CharacterMovementComponent;
+
 UCLASS()
 class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemInterface
 {
@@ -67,6 +70,8 @@ public:
 	// 重载Crouch的功能
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	UGD_MotionWarpingComponent* GetGdMotionWarpingComponent() const;
 	
 protected:
 
@@ -85,7 +90,10 @@ protected:
 	UPROPERTY(Transient)
 	UGD_AttributeSet* AttributeSet;
 
-	
+	UPROPERTY(VisibleAnywhere , BlueprintReadOnly , Category= MotionWarp)
+	UGD_MotionWarpingComponent* GDMotionWarpingComponent;
+
+	UGD_CharacterMovementComponent* GDCharacterMovementComponent;
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -171,5 +179,5 @@ protected:
 
 	// Delegates
 protected:
-	FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
+	//FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
 };

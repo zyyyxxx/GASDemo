@@ -19,6 +19,8 @@ void UGD_AttributeSet::PostGameplayEffectExecute(const  struct FGameplayEffectMo
 	{
 		SetHealth(FMath::Clamp(GetHealth() , 0.f , GetMaxHealth()));
 	}
+
+	//已在角色的委托中设置
 	/*else if(Data.EvaluatedData.Attribute == GetMaxMovementSpeedAttribute()) // 设置移动速度
 	{
 		ACharacter* OwningCharacter = Cast<ACharacter>(GetOwningActor());
