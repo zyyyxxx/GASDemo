@@ -71,7 +71,7 @@ public:
 	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
-	UGD_MotionWarpingComponent* GetGdMotionWarpingComponent() const;
+	UGD_MotionWarpingComponent* GetGDMotionWarpingComponent() const;
 	
 protected:
 

@@ -3,6 +3,7 @@
 
 #include "ActorComponents/GD_CharacterMovementComponent.h"
 #include "AbilitySystemComponent.h"
+#include "MotionWarpingComponent.h"
 
 static TAutoConsoleVariable<int32> CVarShowTraversal(
 	TEXT("ShowDebugTraversal"),
@@ -17,6 +18,7 @@ bool UGD_CharacterMovementComponent::TryTraversal(UAbilitySystemComponent* ASC)
 {
 	for(TSubclassOf<UGameplayAbility> AbilityClass : TraversalAbilitiesOrdered)
 	{
+		// 按顺序尝试 Vault 和 Jump
 		if(ASC->TryActivateAbilityByClass(AbilityClass , true))
 		{
 			FGameplayAbilitySpec* Spec;

@@ -26,7 +26,7 @@
 
 
 AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer):
-	Super(ObjectInitializer.SetDefaultSubobjectClass<UGD_AbilitySystemComponent>(ACharacter::CharacterMovementComponentName)) // 修改父类组件创建类型
+	Super(ObjectInitializer.SetDefaultSubobjectClass<UGD_CharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) // 修改父类组件创建类型
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -165,7 +165,7 @@ void AGD_CharacterBase::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeig
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
 }
 
-UGD_MotionWarpingComponent* AGD_CharacterBase::GetGdMotionWarpingComponent() const
+UGD_MotionWarpingComponent* AGD_CharacterBase::GetGDMotionWarpingComponent() const
 {
 	return GDMotionWarpingComponent;
 }
@@ -303,16 +303,15 @@ void AGD_CharacterBase::Look(const FInputActionValue& Value)
 
 void AGD_CharacterBase::OnJumpStarted(const FInputActionValue& Value)
 {
+	/*
 	FGameplayEventData PayLoad;
 	PayLoad.Instigator = this;
 	PayLoad.EventTag = JumpEventTag;
-
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , JumpEventTag ,PayLoad); // 利用tag触发BP_GA_Jump的trigger
+	*/
 
-	// 尝试Traversal
+	// 尝试Traversal 跳跃GA触发移动到GDCharacterMovementComponent
 	GDCharacterMovementComponent->TryTraversal(AbilitySystemComponent);
-
-
 	
 }
 

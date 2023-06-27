@@ -22,9 +22,9 @@ class GASDEMO_API UGA_Vault : public UGD_GameplayAbility
 	 *  Some abilities may need to do extra checks here if they are consuming extra stuff in CommitExecute */
 	virtual bool CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, FGameplayTagContainer* OptionalRelevantTags) override;
 
-	//virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
+	virtual void ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData) override;
 
-	//virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
+	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 
 
 protected:
@@ -53,7 +53,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* VaultMontage = nullptr;
 	
-	UPROPERTY(EditDefaultsOnly)
+	
 	class UAbilityTask_PlayMontageAndWait* MontageTask = nullptr;
 	
 	FVector JumpToLocation;
