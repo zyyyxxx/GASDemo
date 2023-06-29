@@ -125,7 +125,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 	const float VerticalTraceLength = FMath::Abs(JumpToLocation.Z - (StartLocation + i * UpVector * HorizontalTraceStep).Z);
 
 
-	FVector VerticalStartLocation = JumpToLocation * UpVector * VerticalTraceLength;
+	FVector VerticalStartLocation = JumpToLocation + UpVector * VerticalTraceLength;
 
 	i = 0;
 

@@ -16,6 +16,8 @@ UAbilityTask_TickWallRun* UAbilityTask_TickWallRun::CreatWallRunTask(UGameplayAb
 	WallRunTask->CharacterMovement = InCharacterMovement;
 	WallRunTask->bTickingTask = true;
 	WallRunTask->WallRun_TraceObjectTypes = TraceObjectTypes;
+	
+	return nullptr;
 }
 
 void UAbilityTask_TickWallRun::Activate()
@@ -90,8 +92,10 @@ void UAbilityTask_TickWallRun::TickTask(float DeltaTime)
 
 bool UAbilityTask_TickWallRun::FindRunableWall(FHitResult& OnWallHit)
 {
+	return true;
 }
 
 bool UAbilityTask_TickWallRun::IsWallOnTheLeft(const FHitResult& InWallHit) const
 {
+	return true;
 }
