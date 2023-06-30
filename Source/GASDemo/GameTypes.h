@@ -45,3 +45,30 @@ enum class EFoot:uint8
 	Left  UMETA(DisplayName = "Left"),
 	Right UMETA(DisplayName = "Right"),
 };
+
+
+USTRUCT(BlueprintType)
+struct FMotionWarpingTargetByLocationAndRotaion
+{
+	GENERATED_USTRUCT_BODY()
+
+	FMotionWarpingTargetByLocationAndRotaion()
+	{
+		
+	}
+
+	FMotionWarpingTargetByLocationAndRotaion(FName InName , FVector InLocation , FRotator InRotation)
+		:Name(InName) , Location(InLocation) , Rotation(InRotation)
+	{
+		
+	}
+
+	UPROPERTY()
+	FName Name;
+
+	UPROPERTY()
+	FVector Location;
+
+	UPROPERTY()
+	FRotator Rotation;
+};

@@ -62,7 +62,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 	const bool bShowTraversal = CVar->GetInt() > 0;
 	EDrawDebugTrace::Type DebugDrawType = bShowTraversal ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
 	
-				bool bJumpToLocation = false;
+	bool bJumpToLocation = false;
 
 	int32 JumpToLocationIdx = INDEX_NONE; // INDEX_NONE	= -1
 
@@ -82,14 +82,15 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 		if(UKismetSystemLibrary::SphereTraceSingleForObjects(this , TraceStart , TraceEnd , HorizontalTraceRadius , TraceObjectTypes ,
 			true , ActorToIgnore , DebugDrawType , TraceHit , true ))
 		{
-			if(JumpToLocationIdx == INDEX_NONE && (i< HorizontalTraceCount - 1))
+			if(JumpToLocationIdx == INDEX_NONE && (i< HorizontalTraceCount - 1)) // 如果第一个边缘点还未设置 并且不是最后一个球体检测 最后一个过高
 			{
-				//第一个边缘点
+				//记录第一个边缘点
 				JumpToLocationIdx = i;
 				JumpToLocation = TraceHit.Location; 
 			}
 			else if(JumpToLocationIdx == (i-1))
 			{
+				// 遇到了障碍物，我们需要更新跳跃距离，不再是TraceLenght
 				MaxJumpDistance = FVector::Dist2D(TraceHit.Location , TraceStart); //Euclidean distance between two points in the XY plane (ignoring Z)
 				break;
 			}
@@ -103,13 +104,15 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 		}
 	}
 
+	// 未检测到任何物体
 	if(JumpToLocationIdx == INDEX_NONE)
 	{
 		return false;
 	}
 
+	// 检测到物体，即我们可能需要跳
 	const float DistanceToJumpTo = FVector::Dist2D(StartLocation , JumpToLocation); //Euclidean distance between two points in the XY plane (ignoring Z)
-
+	// 垂直球体检测的最长范围（横向）
 	const float MaxVerticalTraceDistance = MaxJumpDistance - DistanceToJumpTo;
 
 	if(MaxVerticalTraceDistance < 0)
@@ -121,7 +124,8 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 	{
 		 i = HorizontalTraceCount - 1;
 	}
-	
+
+	//垂直检测的竖直长度
 	const float VerticalTraceLength = FMath::Abs(JumpToLocation.Z - (StartLocation + i * UpVector * HorizontalTraceStep).Z);
 
 
@@ -188,15 +192,15 @@ void UGA_Vault::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 	}
 
 	AGD_CharacterBase* Character = GetGD_CharacterFromActorInfo();
-
+	
+	// 设置movement模式
 	UCharacterMovementComponent* CharacterMovement = Character ? Character->GetCharacterMovement() : nullptr;
-
 	if(CharacterMovement)
 	{
 		CharacterMovement->SetMovementMode(MOVE_Flying);//Flying, ignoring the effects of gravity. Affected by the current physics volume's fluid friction
 	}
+	// 设置碰撞
 	UCapsuleComponent* CapsuleComponent = Character ? Character->GetCapsuleComponent() : nullptr;
-
 	if(CapsuleComponent)
 	{
 		for(ECollisionChannel Channel : CollisionChannelsToIgnore)
@@ -205,15 +209,20 @@ void UGA_Vault::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const F
 		}
 	}
 
+	//设置motionWraping
 	UGD_MotionWarpingComponent* MotionWarpingComponent = Character ? Character->GetGDMotionWarpingComponent() : nullptr;
-
 	if(MotionWarpingComponent)
 	{
 		//进行 root motion warping
-		MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("JumpTOLocation") , JumpToLocation , Character->GetActorRotation());
+		MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("JumpToLocation") , JumpToLocation , Character->GetActorRotation());
 		MotionWarpingComponent->AddOrUpdateWarpTargetFromLocationAndRotation(TEXT("JumpOverLocation") , JumpOverLocation , Character->GetActorRotation());
+
+		MotionWarpingComponent->SendWarpPointsToClients(TEXT("JumpToLocation") , JumpToLocation , Character->GetActorRotation());
+		MotionWarpingComponent->SendWarpPointsToClients(TEXT("JumpOverLocation") , JumpOverLocation , Character->GetActorRotation());
+		
 	}
 
+	// 设置montagetask 播放完毕调用End
 	MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this , NAME_None , VaultMontage);
 	MontageTask->OnBlendOut.AddDynamic(this , &UGA_Vault::K2_EndAbility);
 	MontageTask->OnCompleted.AddDynamic(this , &UGA_Vault::K2_EndAbility);

@@ -46,9 +46,9 @@ protected:
 	ACharacter* CharacterOwner = nullptr;
 
 	TArray<TEnumAsByte<EObjectTypeQuery>> WallRun_TraceObjectTypes;
-
+	// 是否有可以跑的墙
 	bool FindRunableWall(FHitResult& OnWallHit);
-
+	// 选择方向
 	bool IsWallOnTheLeft(const FHitResult& InWallHit) const;
 
 	

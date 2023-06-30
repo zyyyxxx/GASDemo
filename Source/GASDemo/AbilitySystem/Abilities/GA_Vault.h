@@ -53,7 +53,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	UAnimMontage* VaultMontage = nullptr;
 	
-	
+	UPROPERTY()
 	class UAbilityTask_PlayMontageAndWait* MontageTask = nullptr;
 	
 	FVector JumpToLocation;

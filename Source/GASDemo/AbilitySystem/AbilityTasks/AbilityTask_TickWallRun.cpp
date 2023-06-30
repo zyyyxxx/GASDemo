@@ -6,10 +6,11 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetArrayLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
-UAbilityTask_TickWallRun* UAbilityTask_TickWallRun::CreatWallRunTask(UGameplayAbility* OwningAbility,
-	ACharacter* InCharacter, UCharacterMovementComponent* InCharacterMovement,
-	TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes)
+UAbilityTask_TickWallRun* UAbilityTask_TickWallRun:: CreatWallRunTask(UGameplayAbility* OwningAbility,
+                                                                      ACharacter* InCharacter, UCharacterMovementComponent* InCharacterMovement,
+                                                                      TArray<TEnumAsByte<EObjectTypeQuery>> TraceObjectTypes)
 {
 	UAbilityTask_TickWallRun* WallRunTask = NewAbilityTask<UAbilityTask_TickWallRun>(OwningAbility);
 	WallRunTask->CharacterOwner = InCharacter;
@@ -17,7 +18,7 @@ UAbilityTask_TickWallRun* UAbilityTask_TickWallRun::CreatWallRunTask(UGameplayAb
 	WallRunTask->bTickingTask = true;
 	WallRunTask->WallRun_TraceObjectTypes = TraceObjectTypes;
 	
-	return nullptr;
+	return WallRunTask;
 }
 
 void UAbilityTask_TickWallRun::Activate()
@@ -30,7 +31,7 @@ void UAbilityTask_TickWallRun::Activate()
 
 	if(!FindRunableWall(OnWallHit))
 	{
-		if(ShouldBroadcastAbilityTaskDelegates())
+		if(ShouldBroadcastAbilityTaskDelegates()) // 确保ability还在运行
 		{
 			OnFinished.Broadcast();
 		}
@@ -60,7 +61,7 @@ void UAbilityTask_TickWallRun::TickTask(float DeltaTime)
 
 	FHitResult OnWallHit;
 
-	const FVector CurrentAcceleration = CharacterMovement->GetCurrentAcceleration();
+	//const FVector CurrentAcceleration = CharacterMovement->GetCurrentAcceleration();
 
 	if(!FindRunableWall(OnWallHit))
 	{
@@ -92,10 +93,55 @@ void UAbilityTask_TickWallRun::TickTask(float DeltaTime)
 
 bool UAbilityTask_TickWallRun::FindRunableWall(FHitResult& OnWallHit)
 {
-	return true;
+	const FVector CharacterLocation = CharacterOwner->GetActorLocation();
+
+	const FVector RightVector = CharacterOwner->GetActorRightVector();
+	const FVector ForwardVector = CharacterOwner->GetActorForwardVector();
+	// 检测长度
+	const float TraceLength = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius() + 30.f;
+
+	TArray<AActor*> ActorsToIgnore = {CharacterOwner};
+
+	FHitResult TraceHit;
+
+	// Debug
+	static const auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("ShowDebugTraversal"));
+	const bool bShowTraversal = CVar->GetInt() > 0;
+	EDrawDebugTrace::Type DebugDrawType = bShowTraversal ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
+
+	//进行前方的检测
+	if(UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), CharacterLocation ,
+		CharacterLocation + ForwardVector * TraceLength , WallRun_TraceObjectTypes , true , ActorsToIgnore ,
+		DebugDrawType , OnWallHit , true))
+	{
+		return false;
+	}
+
+	//前方无阻挡 进行左边的检测
+	if(UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), CharacterLocation ,
+		CharacterLocation + -RightVector * TraceLength , WallRun_TraceObjectTypes , true , ActorsToIgnore ,
+		DebugDrawType , OnWallHit , true))
+	{
+		if(FVector::DotProduct(OnWallHit.ImpactNormal , RightVector) > 0.1F)
+		{
+			return true;
+		}
+	}
+	//进行右边的检测
+	if(UKismetSystemLibrary::LineTraceSingleForObjects(GetWorld(), CharacterLocation ,
+		CharacterLocation + RightVector * TraceLength , WallRun_TraceObjectTypes , true , ActorsToIgnore ,
+		DebugDrawType , OnWallHit , true))
+	{
+		if(FVector::DotProduct(OnWallHit.ImpactNormal , -RightVector) > 0.1F)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool UAbilityTask_TickWallRun::IsWallOnTheLeft(const FHitResult& InWallHit) const
 {
-	return true;
+	return FVector::DotProduct(CharacterOwner->GetActorRightVector() , InWallHit.ImpactNormal) > 0.f;
 }
