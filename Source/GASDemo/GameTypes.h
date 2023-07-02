@@ -72,3 +72,14 @@ struct FMotionWarpingTargetByLocationAndRotaion
 	UPROPERTY()
 	FRotator Rotation;
 };
+
+UCLASS(Blueprintable , BlueprintType)
+class UItemStaticData : public UObject
+{
+public:
+	GENERATED_BODY()
+
+protected:
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	FName Name;
+};
