@@ -25,4 +25,9 @@ protected:
 	TSubclassOf<UGameplayEffect> JumpEffect;
 	*/
 
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag WallRunStateTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	float OffWallJumpStrength = 100.f;
 };

@@ -22,9 +22,8 @@ void UGA_WallRun::OnGiveAbility(const FGameplayAbilityActorInfo* ActorInfo, cons
 
 	ACharacter* CharacterAvatar = Cast<ACharacter>(ActorInfo->AvatarActor);
 	UCapsuleComponent* CapsuleComponent = CharacterAvatar->GetCapsuleComponent();
-	CapsuleComponent->OnComponentHit.AddDynamic(this, &UGA_WallRun::OnCapsuleComponentHit); //添加碰撞检测的函数
-
 	
+	CapsuleComponent->OnComponentHit.AddDynamic(this, &UGA_WallRun::OnCapsuleComponentHit); //添加碰撞检测的函数
 	
 }
 
@@ -34,6 +33,7 @@ void UGA_WallRun::OnRemoveAbility(const FGameplayAbilityActorInfo* ActorInfo, co
 	{
 		ACharacter* CharacterAvatar = Cast<ACharacter>(ActorInfo->AvatarActor);
 		UCapsuleComponent* CapsuleComponent = CharacterAvatar->GetCapsuleComponent();
+		
 		CapsuleComponent->OnComponentHit.RemoveDynamic(this, &UGA_WallRun::OnCapsuleComponentHit); //移除碰撞检测的函数
 	}
 	

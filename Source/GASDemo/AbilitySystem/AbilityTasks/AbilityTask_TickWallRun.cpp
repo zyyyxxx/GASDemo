@@ -43,6 +43,7 @@ void UAbilityTask_TickWallRun::Activate()
 	CharacterOwner->Landed(OnWallHit);
 	CharacterOwner->SetActorLocation(OnWallHit.ImpactPoint + OnWallHit.ImpactNormal * 60.0f);
 	CharacterMovement->SetMovementMode(MOVE_Flying);
+	CharacterMovement->GravityScale = 0.25;
 	
 }
 
@@ -51,6 +52,8 @@ void UAbilityTask_TickWallRun::OnDestroy(bool bInOwnerFinished)
 	CharacterMovement->SetPlaneConstraintEnabled(false); //禁用平面约束
 
 	CharacterMovement->SetMovementMode(MOVE_Falling);
+
+	CharacterMovement->GravityScale = 1.75;
 	
 	Super::OnDestroy(bInOwnerFinished);
 }
@@ -65,7 +68,7 @@ void UAbilityTask_TickWallRun::TickTask(float DeltaTime)
 
 	if(!FindRunableWall(OnWallHit))
 	{
-		if(ShouldBroadcastAbilityTaskDelegates())
+		if(ShouldBroadcastAbilityTaskDelegates()) // 确保ability还在运行
 		{
 			OnFinished.Broadcast();
 		}
@@ -74,13 +77,13 @@ void UAbilityTask_TickWallRun::TickTask(float DeltaTime)
 		return;
 	}
 
-	FRotator DirectionRotator = IsWallOnTheLeft(OnWallHit) ? FRotator(0,-90,0) : FRotator(0, 90, 0);
+	const FRotator DirectionRotator = IsWallOnTheLeft(OnWallHit) ? FRotator(0,-90,0) : FRotator(0, 90, 0);
 
-	const FVector WallRunDirection = DirectionRotator.RotateVector(OnWallHit.ImpactPoint);
+	const FVector WallRunDirection = DirectionRotator.RotateVector(OnWallHit.ImpactNormal); 
 
 	CharacterMovement->Velocity = WallRunDirection * 700.f;
 
-	CharacterMovement->Velocity.Z = CharacterMovement->GetGravityZ() * DeltaTime;
+	CharacterMovement->Velocity.Z = 0; // 为了多人游戏 我们需要精确的确定 直接覆盖可能会导致错误，可能可以使用gravityScale
 
 	CharacterOwner->SetActorRotation(WallRunDirection.Rotation());
 
@@ -122,7 +125,7 @@ bool UAbilityTask_TickWallRun::FindRunableWall(FHitResult& OnWallHit)
 		CharacterLocation + -RightVector * TraceLength , WallRun_TraceObjectTypes , true , ActorsToIgnore ,
 		DebugDrawType , OnWallHit , true))
 	{
-		if(FVector::DotProduct(OnWallHit.ImpactNormal , RightVector) > 0.1F)
+		if(FVector::DotProduct(OnWallHit.ImpactNormal , RightVector) > 0.3f)
 		{
 			return true;
 		}
@@ -132,7 +135,7 @@ bool UAbilityTask_TickWallRun::FindRunableWall(FHitResult& OnWallHit)
 		CharacterLocation + RightVector * TraceLength , WallRun_TraceObjectTypes , true , ActorsToIgnore ,
 		DebugDrawType , OnWallHit , true))
 	{
-		if(FVector::DotProduct(OnWallHit.ImpactNormal , -RightVector) > 0.1F)
+		if(FVector::DotProduct(OnWallHit.ImpactNormal , -RightVector) > 0.3f)
 		{
 			return true;
 		}
