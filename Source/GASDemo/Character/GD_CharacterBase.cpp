@@ -23,6 +23,7 @@
 #include "Net/UnrealNetwork.h"
 #include "ActorComponents/GD_CharacterMovementComponent.h"
 #include "ActorComponents/GD_MotionWarpingComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 
 
 AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer):
@@ -76,6 +77,9 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
 
 	GDMotionWarpingComponent = CreateDefaultSubobject<UGD_MotionWarpingComponent>(TEXT("MotionWarpingComponent"));
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	InventoryComponent->SetIsReplicated(true);
 	
 }
 
@@ -390,4 +394,5 @@ void AGD_CharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AGD_CharacterBase , CharacterData);
+	DOREPLIFETIME(AGD_CharacterBase , InventoryComponent);
 }

@@ -19,6 +19,8 @@ class UGameplayAbility;
 class UGD_MotionWarpingComponent;
 class UGD_CharacterMovementComponent;
 
+class UInventoryComponent;
+
 UCLASS()
 class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemInterface
 {
@@ -180,4 +182,11 @@ protected:
 	// Delegates
 protected:
 	//FDelegateHandle MaxMovementSpeedChangedDelegateHandle;
+
+
+	//Inventory
+protected:
+	UPROPERTY(EditAnywhere , Replicated)
+	UInventoryComponent* InventoryComponent = nullptr;
+	
 };

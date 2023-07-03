@@ -12,7 +12,8 @@ UCLASS()
 class GASDEMO_API UGDGameStatics : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-
+public:
+	
 	UFUNCTION(BlueprintCallable , BlueprintPure)
 	static const UItemStaticData* GetItemStaticData(TSubclassOf<UItemStaticData> ItemDataClass);
 };
