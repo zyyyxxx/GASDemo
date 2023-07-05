@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "GameTypes.generated.h"
 
+class AItemActor;
+
 USTRUCT(BlueprintType)
 struct FCharacterData
 {
@@ -82,4 +84,19 @@ public:
 public:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
 	FName Name;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	TSubclassOf<AItemActor> ItemActorClass;
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	FName AttachmentSocket = NAME_None;
 };
+
+UENUM(BlueprintType)
+enum class EItemState: uint8
+{
+	None  UMETA(DisplayName = "None"),
+	Equipped UMETA(DisplayName = "Equipped"),
+	Dropped UMETA(DisplayName = "Dropped"),
+};
+

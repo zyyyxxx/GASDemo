@@ -186,7 +186,7 @@ protected:
 
 	//Inventory
 protected:
-	UPROPERTY(EditAnywhere , Replicated)
+	UPROPERTY(EditAnywhere , Replicated , BlueprintReadOnly)
 	UInventoryComponent* InventoryComponent = nullptr;
 	
 };

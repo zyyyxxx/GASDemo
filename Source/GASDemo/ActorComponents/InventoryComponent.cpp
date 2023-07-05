@@ -39,8 +39,8 @@ void UInventoryComponent::InitializeComponent()
 		{
 			InventoryList.AddItem(ItemClass);
 		}
+		
 	}
-	
 	
 }
 
@@ -54,11 +54,67 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 
 		if(IsValid(ItemInstance))
 		{
-			WroteSomething = Channel->ReplicateSubobject(ItemInstance , *Bunch , *RepFlags); // Replicates given subobject on this actor channel
+			WroteSomething |= Channel->ReplicateSubobject(ItemInstance , *Bunch , *RepFlags); // Replicates given subobject on this actor channel
 		}
 		
 	}
 	return WroteSomething;
+}
+
+void UInventoryComponent::AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.AddItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	InventoryList.RemoveItem(InItemStaticDataClass);
+}
+
+void UInventoryComponent::EquipItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
+{
+	if(GetOwner()->HasAuthority())
+	{
+		for(auto Item : InventoryList.GetItemsRef())
+		{
+			if(Item.ItemInstance->ItemStaticDataClass == InItemStaticDataClass)
+			{
+				Item.ItemInstance->OnEquipped(GetOwner());
+				CurrentItem = Item.ItemInstance;
+				break;	
+			}
+		}
+	}
+}
+
+void UInventoryComponent::UnEquipItem()
+{
+	if(GetOwner()->HasAuthority())
+	{
+		if(IsValid(CurrentItem))
+		{
+			CurrentItem->OnUnEquipped();
+			CurrentItem = nullptr;
+		}
+	}
+}
+
+void UInventoryComponent::DropItem()
+{
+	if(GetOwner()->HasAuthority())
+	{
+		if(IsValid(CurrentItem))
+		{
+			CurrentItem->OnDropped();
+			RemoveItem(CurrentItem->ItemStaticDataClass);
+			CurrentItem = nullptr;
+		}
+	}
+}
+
+UInventoryItemInstance* UInventoryComponent::GetEquippedItem() const
+{
+	return CurrentItem;
 }
 
 
@@ -91,5 +147,5 @@ void UInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UInventoryComponent , InventoryList);
-	
+	DOREPLIFETIME(UInventoryComponent , CurrentItem);
 }
