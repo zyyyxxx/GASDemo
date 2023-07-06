@@ -36,8 +36,11 @@ protected:
 	UPROPERTY(Replicated)
 	UInventoryItemInstance* ItemInstance = nullptr;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_ItemState)
 	TEnumAsByte<EItemState> ItemState = EItemState::None;
+
+	UFUNCTION()
+	void OnRep_ItemState();
 
 	UPROPERTY()
 	USphereComponent*  SphereComponent = nullptr;
@@ -45,8 +48,10 @@ protected:
 	UFUNCTION()
 	void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep,
 		const FHitResult& SweepResult);
+	
 
-	FGameplayTag OverlapEventTag;
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UItemStaticData> ItemStaticDataClass;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

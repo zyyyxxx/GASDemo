@@ -80,6 +80,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	InventoryComponent->SetIsReplicated(true);
+
+	GDMotionWarpingComponent->SetIsReplicated(true);
 	
 }
 
@@ -265,6 +267,12 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		//Sprint
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnSprintStarted);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnSprintEnded);
+
+		//Inventory
+		EnhancedInputComponent->BindAction(EquipNextAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnEquipNextTriggered);
+		EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnDropItemTriggered);
+		EnhancedInputComponent->BindAction(UnequipAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnUnequipTriggered);
+
 	}
 
 }
@@ -355,6 +363,30 @@ void AGD_CharacterBase::OnSprintEnded(const FInputActionValue& Value)
 		AbilitySystemComponent->CancelAbilities(&SprintTags);
 		
 	}
+}
+
+void AGD_CharacterBase::OnDropItemTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::DropItemTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , UInventoryComponent::DropItemTag , EventPayload);
+}
+
+void AGD_CharacterBase::OnEquipNextTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::EquipNextTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , UInventoryComponent::EquipNextTag , EventPayload);
+}
+
+void AGD_CharacterBase::OnUnequipTriggered(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = UInventoryComponent::UnequipTag;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , UInventoryComponent::UnequipTag , EventPayload);
 }
 
 

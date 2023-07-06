@@ -31,6 +31,7 @@ struct FInventoryList : public FFastArraySerializer ///** Base struct for wrappi
 	}
 
 	void AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
+	void AddItem(UInventoryItemInstance* InItemInstance);
 	void RemoveItem(TSubclassOf<UItemStaticData> InItemStaticDataClass);
 
 	TArray<FInventoryListItem>& GetItemsRef(){return Items;}

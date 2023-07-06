@@ -5,6 +5,7 @@
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
+#include "ActorComponents/InventoryComponent.h"
 #include "Components/SphereComponent.h"
 #include "Engine/ActorChannel.h"
 #include "Inventory/InventoryItemInstance.h"
@@ -16,8 +17,8 @@ AItemActor::AItemActor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
 	bReplicates = true;
+	SetReplicateMovement(true);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("USphereComponent"));
 	SphereComponent->SetupAttachment(RootComponent);
@@ -29,19 +30,19 @@ void AItemActor::OnEquipped()
 {
 	ItemState = EItemState::Equipped;
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SphereComponent->SetGenerateOverlapEvents(false);
 }
 
 void AItemActor::OnUnEquipped()
 {
 	ItemState = EItemState::None;
 	SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SphereComponent->SetGenerateOverlapEvents(false);
 }
 
 void AItemActor::OnDropped()
 {
 	ItemState = EItemState::Dropped;
-
-	SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	
 	GetRootComponent()->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 
@@ -64,6 +65,8 @@ void AItemActor::OnDropped()
 		static const auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("ShowDebugTraversal"));
 		const bool bShowInventory = CVar->GetInt() > 0;
 		EDrawDebugTrace::Type DebugDrawType = bShowInventory ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
+
+		FVector TargetLocation = TraceEnd;
 		
 		//丢弃射线检测
 		if(UKismetSystemLibrary::LineTraceSingleByProfile(this , TraceStart , TraceEnd , TEXT("Worldstatic") , true,
@@ -71,13 +74,14 @@ void AItemActor::OnDropped()
 		{
 			if(TraceHit.bBlockingHit)
 			{
-				SetActorLocation(TraceHit.Location);
-				return;
+				TargetLocation = TraceHit.Location;
 			}
 		}
 
-		SetActorLocation(TraceEnd);
-		
+		SetActorLocation(TargetLocation);
+
+		SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		SphereComponent->SetGenerateOverlapEvents(true);
 		
 	}
 }
@@ -101,21 +105,53 @@ void AItemActor::Init(UInventoryItemInstance* InInstance)
 void AItemActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if(HasAuthority())
+	{
+		if(!IsValid(ItemInstance) && IsValid(ItemStaticDataClass))
+		{
+			ItemInstance = NewObject<UInventoryItemInstance>();
+			ItemInstance->Init(ItemStaticDataClass);
+
+			SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			SphereComponent->SetGenerateOverlapEvents(true);
+		}
+	}
 	
 }
 
 
-void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AItemActor::OnRep_ItemState()
 {
-	FGameplayEventData EventPayload;
-	EventPayload.OptionalObject = this;
-	/**
-	 * This function can be used to trigger an ability on the actor in question with useful payload data.
-	 * NOTE: GetAbilitySystemComponent is called on the actor to find a good component, and if the component isn't
-	 * found, the event will not be sent.
-	 */
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OtherActor, OverlapEventTag , EventPayload);
+	switch (ItemState)
+	{
+		case EItemState::Equipped:
+			SphereComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			SphereComponent->SetGenerateOverlapEvents(false);
+			break;
+		default:
+			SphereComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+			SphereComponent->SetGenerateOverlapEvents(true);
+			break;
+	}
+}
+
+void AItemActor::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                                 UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(HasAuthority())
+	{
+		FGameplayEventData EventPayload;
+		EventPayload.Instigator = this;
+		EventPayload.OptionalObject = ItemInstance;
+		EventPayload.EventTag = UInventoryComponent::EquipItemActorTag;
+		/**
+		 * This function can be used to trigger an ability on the actor in question with useful payload data.
+		 * NOTE: GetAbilitySystemComponent is called on the actor to find a good component, and if the component isn't
+		 * found, the event will not be sent.
+		 */
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(OtherActor, UInventoryComponent::EquipNextTag , EventPayload);
+	}
 }
 
 // Called every frame

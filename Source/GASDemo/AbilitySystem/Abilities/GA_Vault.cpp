@@ -169,7 +169,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 	{
 		JumpOverLocation = TraceHit.ImpactPoint;
 	}
-
+	
 	if(bShowTraversal)
 	{
 		DrawDebugSphere(GetWorld() , JumpToLocation , 15 , 16 , FColor::White , false , 7);

@@ -21,7 +21,7 @@ class UGD_CharacterMovementComponent;
 
 class UInventoryComponent;
 
-UCLASS()
+UCLASS(config=Game)
 class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemInterface
 {
 	GENERATED_BODY()
@@ -57,6 +57,16 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	/** Sprint Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* SprintAction;
+
+	/** Inventory Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* DropItemAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* EquipNextAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* UnequipAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -95,6 +105,7 @@ protected:
 	UPROPERTY(VisibleAnywhere , BlueprintReadOnly , Category= MotionWarp)
 	UGD_MotionWarpingComponent* GDMotionWarpingComponent;
 
+	UPROPERTY()
 	UGD_CharacterMovementComponent* GDCharacterMovementComponent;
 	
 	/** Called for movement input */
@@ -114,8 +125,12 @@ protected:
 
 	/** Called for sprint input */
 	void OnSprintStarted(const FInputActionValue& Value);
-	void OnSprintEnded(const FInputActionValue& Value);	
+	void OnSprintEnded(const FInputActionValue& Value);
 
+	void OnDropItemTriggered(const FInputActionValue& Value);
+	void OnEquipNextTriggered(const FInputActionValue& Value);
+	void OnUnequipTriggered(const FInputActionValue& Value);
+	
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -186,7 +201,7 @@ protected:
 
 	//Inventory
 protected:
-	UPROPERTY(EditAnywhere , Replicated , BlueprintReadOnly)
+	UPROPERTY(EditAnywhere , Replicated )
 	UInventoryComponent* InventoryComponent = nullptr;
 	
 };

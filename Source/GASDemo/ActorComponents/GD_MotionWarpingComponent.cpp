@@ -25,6 +25,13 @@ void UGD_MotionWarpingComponent::SendWarpPointsToClients(FName InName , FVector 
 void UGD_MotionWarpingComponent::MulticastSyncWarpPoints_Implementation(const FMotionWarpingTargetByLocationAndRotaion& Target)
 {
 	// 打包发送
+	if(Target.Name == "JumpToLocation")
+	{
+		DrawDebugSphere(GetWorld() , Target.Location , 15 , 16 , FColor::Blue , false , 10);
+	}else
+	{
+		DrawDebugSphere(GetWorld() , Target.Location , 15 , 16 , FColor::Green , false , 10);
+	}
 	
 	AddOrUpdateWarpTargetFromLocationAndRotation(Target.Name , Target.Location , FRotator(Target.Rotation));
 	
