@@ -6,6 +6,8 @@
 #include "GameTypes.generated.h"
 
 class AItemActor;
+class UGameplayAbility;
+class UGameplayEffect;
 
 USTRUCT(BlueprintType)
 struct FCharacterData
@@ -13,10 +15,10 @@ struct FCharacterData
 	GENERATED_USTRUCT_BODY()
 	
 	UPROPERTY(BlueprintReadOnly , EditAnywhere , Category = "GAS")
-	TArray<TSubclassOf<class UGameplayEffect>> Effects;
+	TArray<TSubclassOf<UGameplayEffect>> Effects;
 
 	UPROPERTY(BlueprintReadOnly , EditAnywhere , Category = "GAS")
-	TArray<TSubclassOf<class UGameplayAbility>> Abilities;
+	TArray<TSubclassOf<UGameplayAbility>> Abilities;
 
 	UPROPERTY(BlueprintReadOnly , EditAnywhere , Category = "Animation")
 	class UCharacterAnimDataAsset* CharacterAnimDataAsset;
@@ -78,7 +80,7 @@ struct FMotionWarpingTargetByLocationAndRotaion
 UCLASS(Blueprintable , BlueprintType)
 class UItemStaticData : public UObject
 {
-public:
+
 	GENERATED_BODY()
 
 public:
@@ -93,6 +95,30 @@ public:
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
 	bool bCanEquipped = false;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	FCharacterAnimationData CharacterAnimationData;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
+};
+
+UCLASS(Blueprintable , BlueprintType)
+class UWeaponStaticData : public UItemStaticData
+{
+
+	GENERATED_BODY()
+	
+public:
+	
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	TSubclassOf<UGameplayEffect> DamageEffect;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	USkeletalMesh* SkeletalMesh;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	UStaticMesh* StaticMesh;
 };
 
 UENUM(BlueprintType)

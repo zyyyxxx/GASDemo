@@ -176,6 +176,11 @@ UGD_MotionWarpingComponent* AGD_CharacterBase::GetGDMotionWarpingComponent() con
 	return GDMotionWarpingComponent;
 }
 
+UInventoryComponent* AGD_CharacterBase::GetInventoryComponent() const
+{
+	return InventoryComponent;
+}
+
 void AGD_CharacterBase::GiveAbilities()
 {
 	if(HasAuthority() && AbilitySystemComponent)

@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "GameTypes.h"
 #include "GameFramework/Actor.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "ItemActor.generated.h"
 
 class UInventoryItemInstance;
@@ -33,8 +34,11 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing= OnRep_ItemInstance)
 	UInventoryItemInstance* ItemInstance = nullptr;
+
+	UFUNCTION()
+	void OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance);
 
 	UPROPERTY(ReplicatedUsing = OnRep_ItemState)
 	TEnumAsByte<EItemState> ItemState = EItemState::None;
@@ -50,8 +54,11 @@ protected:
 		const FHitResult& SweepResult);
 	
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere)
 	TSubclassOf<UItemStaticData> ItemStaticDataClass;
+
+	virtual void InitInternal();
+	
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -3,16 +3,36 @@
 
 #include "AnimInstances/GD_AnimInstance.h"
 
+#include "ActorComponents/InventoryComponent.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Character/GD_CharacterBase.h"
 #include "Animation/BlendSpace.h"
 #include "DataAssets/CharacterDataAsset.h"
 #include "DataAssets/CharacterAnimDataAsset.h"
+#include "Inventory/InventoryItemInstance.h"
+
+const UItemStaticData* UGD_AnimInstance::GetEquippedItemData() const
+{
+	AGD_CharacterBase* Character = Cast<AGD_CharacterBase>(GetOwningActor());
+	UInventoryComponent* InventoryComponent = Character ? Character->GetInventoryComponent() : nullptr;
+	UInventoryItemInstance* ItemInstance = InventoryComponent ? InventoryComponent->GetEquippedItem() : nullptr;
+
+	return ItemInstance ? ItemInstance->GetItemStaticData() : nullptr;
+}
 
 UBlendSpace* UGD_AnimInstance::GetLocomotionBlendSpace() const
 {
 	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
 	{
+
+		if(const UItemStaticData* ItemStaticData = GetEquippedItemData())
+		{
+			if(ItemStaticData->CharacterAnimationData.MovementBlendSpace)
+			{
+				return ItemStaticData->CharacterAnimationData.MovementBlendSpace;
+			}
+		}
+		
 		FCharacterData Data = GDCharacter->GetCharacterData();
 
 		if(Data.CharacterAnimDataAsset)
@@ -28,6 +48,15 @@ UAnimSequenceBase* UGD_AnimInstance::GetIdleAnimation() const
 {
 	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
 	{
+
+		if(const UItemStaticData* ItemStaticData = GetEquippedItemData())
+		{
+			if(ItemStaticData->CharacterAnimationData.IdleAnimationAsset)
+			{
+				return ItemStaticData->CharacterAnimationData.IdleAnimationAsset;
+			} 
+		}
+		
 		FCharacterData Data = GDCharacter->GetCharacterData();
 
 		if(Data.CharacterAnimDataAsset)
@@ -43,6 +72,15 @@ UBlendSpace* UGD_AnimInstance::GetCrouchLocomotionBlendSpace() const
 {
 	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
 	{
+
+		if(const UItemStaticData* ItemStaticData = GetEquippedItemData())
+		{
+			if(ItemStaticData->CharacterAnimationData.CrouchMovementBlendSpace)
+			{
+				return ItemStaticData->CharacterAnimationData.CrouchMovementBlendSpace;
+			}
+		}
+		
 		FCharacterData Data = GDCharacter->GetCharacterData();
 
 		if(Data.CharacterAnimDataAsset)
@@ -58,6 +96,15 @@ UAnimSequenceBase* UGD_AnimInstance::GetCrouchIdleAnimation() const
 {
 	if(AGD_CharacterBase*  GDCharacter = Cast<AGD_CharacterBase>(GetOwningActor()))
 	{
+
+		if(const UItemStaticData* ItemStaticData = GetEquippedItemData())
+		{
+			if(ItemStaticData->CharacterAnimationData.CrouchIdleAnimationAsset)
+			{
+				return ItemStaticData->CharacterAnimationData.CrouchIdleAnimationAsset;
+			}
+		}
+		
 		FCharacterData Data = GDCharacter->GetCharacterData();
 
 		if(Data.CharacterAnimDataAsset)

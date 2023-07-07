@@ -2,8 +2,10 @@
 
 
 #include "Inventory/InventoryItemInstance.h"
-
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "GDGameStatics.h"
+#include "Abilities/Tasks/AbilityTask.h"
 #include "Actors/ItemActor.h"
 #include "GameFramework/Character.h"
 #include "Net/UnrealNetwork.h"
@@ -41,10 +43,13 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 			ItemActor->AttachToComponent(SkeletalMesh , FAttachmentTransformRules::SnapToTargetNotIncludingScale , StaticData->AttachmentSocket);
 		}
 	}
+
+	TryGrantAbilities(InOwner);
+	
 	bEquipped = true;
 }
 
-void UInventoryItemInstance::OnUnEquipped()
+void UInventoryItemInstance::OnUnEquipped(AActor* InOwner)
 {
 	if(ItemActor)
 	{
@@ -52,16 +57,54 @@ void UInventoryItemInstance::OnUnEquipped()
 		ItemActor = nullptr;
 	}
 
+	TryRemoveAbilities(InOwner);
+	
 	bEquipped = false;
 }
 
-void UInventoryItemInstance::OnDropped()
+void UInventoryItemInstance::OnDropped(AActor* InOwner)
 {
 	if(ItemActor)
 	{
 		ItemActor->OnDropped();
 	}
+
+	TryRemoveAbilities(InOwner);
+	
 	bEquipped = false;
+}
+
+void UInventoryItemInstance::TryGrantAbilities(AActor* InOwner)
+{
+	if(InOwner && InOwner->HasAuthority())
+	{
+		if(UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+		{
+			const UItemStaticData* StaticData = GetItemStaticData();
+
+			for(auto ItemAbility : StaticData->GrantedAbilities)
+			{
+				GrantedAbilityHandles.Add(AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(ItemAbility)));
+			}
+		}
+	}
+}
+
+void UInventoryItemInstance::TryRemoveAbilities(AActor* InOwner)
+{
+	if(InOwner && InOwner->HasAuthority())
+	{
+		if(UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+		{
+			const UItemStaticData* StaticData = GetItemStaticData();
+
+			for(auto AbilitySpecHandle : GrantedAbilityHandles)
+			{
+				AbilitySystemComponent->ClearAbility(AbilitySpecHandle);
+			}
+			GrantedAbilityHandles.Empty();
+		}
+	}
 }
 
 void UInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
