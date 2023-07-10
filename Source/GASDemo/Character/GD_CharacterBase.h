@@ -67,6 +67,10 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* UnequipAction;
+
+	/** Attack Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* AttackAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -132,6 +136,10 @@ protected:
 	void OnDropItemTriggered(const FInputActionValue& Value);
 	void OnEquipNextTriggered(const FInputActionValue& Value);
 	void OnUnequipTriggered(const FInputActionValue& Value);
+
+	/** Called for attack input */
+	void OnAttackStarted(const FInputActionValue& Value);
+	void OnAttackEnded(const FInputActionValue& Value);
 	
 protected:
 	// APawn interface
@@ -179,6 +187,12 @@ protected:
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag JumpEventTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackStartedEventTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AttackEndedEventTag;
 
 	// Gameplay Tags
 protected:

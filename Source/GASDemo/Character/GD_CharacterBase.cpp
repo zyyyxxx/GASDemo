@@ -45,7 +45,7 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 250.f;
+	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 
@@ -278,6 +278,11 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(DropItemAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnDropItemTriggered);
 		EnhancedInputComponent->BindAction(UnequipAction, ETriggerEvent::Triggered, this, &AGD_CharacterBase::OnUnequipTriggered);
 
+		//Attack
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnAttackStarted);
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnAttackEnded);
+
+
 	}
 
 }
@@ -392,6 +397,22 @@ void AGD_CharacterBase::OnUnequipTriggered(const FInputActionValue& Value)
 	EventPayload.EventTag = UInventoryComponent::UnequipTag;
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , UInventoryComponent::UnequipTag , EventPayload);
+}
+
+void AGD_CharacterBase::OnAttackStarted(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackStartedEventTag;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackStartedEventTag , EventPayload);
+}
+
+void AGD_CharacterBase::OnAttackEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AttackEndedEventTag;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackStartedEventTag , EventPayload);
 }
 
 

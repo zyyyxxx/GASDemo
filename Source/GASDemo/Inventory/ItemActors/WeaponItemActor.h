@@ -16,6 +16,9 @@ class GASDEMO_API AWeaponItemActor : public AItemActor
 
 	const UWeaponStaticData* GetWeaponStaticData() const;
 
+	UFUNCTION(BlueprintPure)
+	FVector GetMuzzleLocation() const;
+
 protected:
 
 	UPROPERTY()
