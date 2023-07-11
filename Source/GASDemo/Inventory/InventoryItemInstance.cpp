@@ -4,6 +4,7 @@
 #include "Inventory/InventoryItemInstance.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemLog.h"
 #include "GDGameStatics.h"
 #include "Abilities/Tasks/AbilityTask.h"
 #include "Actors/ItemActor.h"
@@ -15,7 +16,7 @@ void UInventoryItemInstance::Init(TSubclassOf<UItemStaticData> InItemStaticDataC
 	ItemStaticDataClass = InItemStaticDataClass;
 }
 
-const UItemStaticData* UInventoryItemInstance::GetItemStaticData() const
+const UItemStaticData* UInventoryItemInstance:: GetItemStaticData() const
 {
 	return UGDGameStatics::GetItemStaticData(ItemStaticDataClass);
 }
@@ -30,6 +31,8 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 	{
 
 		const UItemStaticData* StaticData = GetItemStaticData();
+
+		// Spawn
 		
 		FTransform Transform;
 		ItemActor = World->SpawnActorDeferred<AItemActor>(GetItemStaticData()->ItemActorClass , Transform , InOwner);
@@ -44,7 +47,9 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 		}
 	}
 
+	// 添加GA与GE
 	TryGrantAbilities(InOwner);
+	TryApplyEffects(InOwner);
 	
 	bEquipped = true;
 }
@@ -57,7 +62,9 @@ void UInventoryItemInstance::OnUnEquipped(AActor* InOwner)
 		ItemActor = nullptr;
 	}
 
+	// 移除GA与GE
 	TryRemoveAbilities(InOwner);
+	TryRemoveEffects(InOwner);
 	
 	bEquipped = false;
 }
@@ -69,7 +76,9 @@ void UInventoryItemInstance::OnDropped(AActor* InOwner)
 		ItemActor->OnDropped();
 	}
 
+	// 移除GA与GE
 	TryRemoveAbilities(InOwner);
+	TryRemoveEffects(InOwner);
 	
 	bEquipped = false;
 }
@@ -103,6 +112,49 @@ void UInventoryItemInstance::TryRemoveAbilities(AActor* InOwner)
 				AbilitySystemComponent->ClearAbility(AbilitySpecHandle);
 			}
 			GrantedAbilityHandles.Empty();
+		}
+	}
+}
+
+void UInventoryItemInstance::TryApplyEffects(AActor* InOwner)
+{
+	if(UAbilitySystemComponent* AbilityComponent =  UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+	{
+		const UItemStaticData* ItemStaticData = GetItemStaticData();
+		const FGameplayEffectContextHandle EffectContext = AbilityComponent->MakeEffectContext();
+		
+		for(auto GameplayEffect : ItemStaticData->OngoingEffects)
+		{
+			if(!GameplayEffect.Get()) continue;
+
+			
+			FGameplayEffectSpecHandle SpecHandle = AbilityComponent->MakeOutgoingSpec(GameplayEffect , 1, EffectContext);
+			if(SpecHandle.IsValid())
+			{
+				FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+				if(!ActiveGEHandle.WasSuccessfullyApplied())
+				{
+					ABILITY_LOG(Log , TEXT("Item %s failed to apply runtime effect %s! "), *GetName(),*GetNameSafe(GameplayEffect));
+				}
+				else
+				{
+					OngoingEffectHandles.Add(ActiveGEHandle);
+				}
+			}
+		}
+	}
+}
+
+void UInventoryItemInstance::TryRemoveEffects(AActor* InOwner)
+{
+	if(UAbilitySystemComponent* AbilityComponent =  UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(InOwner))
+	{
+		for(FActiveGameplayEffectHandle ActiveEffectHandle : OngoingEffectHandles)
+		{
+			if(ActiveEffectHandle.IsValid())
+			{
+				AbilityComponent->RemoveActiveGameplayEffect(ActiveEffectHandle);
+			}
 		}
 	}
 }

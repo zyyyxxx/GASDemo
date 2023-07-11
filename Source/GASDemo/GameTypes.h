@@ -100,8 +100,13 @@ public:
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	FCharacterAnimationData CharacterAnimationData;
 
+	// Item授予的GA
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	TArray<TSubclassOf<UGameplayAbility>> GrantedAbilities;
+
+	// Item的GE
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	TArray<TSubclassOf<UGameplayEffect>> OngoingEffects;
 };
 
 UCLASS(Blueprintable , BlueprintType)
@@ -123,6 +128,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	float FireRate;
 };
 
 UENUM(BlueprintType)
@@ -131,5 +139,14 @@ enum class EItemState: uint8
 	None  UMETA(DisplayName = "None"),
 	Equipped UMETA(DisplayName = "Equipped"),
 	Dropped UMETA(DisplayName = "Dropped"),
+};
+
+
+UENUM(BlueprintType)
+enum class EMovementDirectionType: uint8
+{ 
+	None  UMETA(DisplayName = "None"),
+	OrientToMovement UMETA(DisplayName = "OrientToMovement"), // 不跟随controller旋转
+	Strafe UMETA(DisplayName = "Strafe"), // 扫射 跟随controler旋转
 };
 

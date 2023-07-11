@@ -45,11 +45,22 @@ protected:
 
 	UPROPERTY(Replicated)
 	AItemActor* ItemActor = nullptr;
-
+	
+	/* Item Granted GA */
 	void TryGrantAbilities(AActor* InOwner);
 
 	void TryRemoveAbilities(AActor* InOwner);
-
+	
 	UPROPERTY()
 	TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+	
+	/* Item Granted GE (实现方法与GD_GA相同) */
+	void TryApplyEffects(AActor* InOwner);
+
+	void TryRemoveEffects(AActor* InOwner);
+	
+	UPROPERTY()
+	TArray<FActiveGameplayEffectHandle> OngoingEffectHandles;
+
+	
 };

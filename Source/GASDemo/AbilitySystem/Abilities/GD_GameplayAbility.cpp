@@ -48,7 +48,7 @@ void UGD_GameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 					FActiveGameplayEffectHandle ActiveGEHandle = AbilityComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 					if(!ActiveGEHandle.WasSuccessfullyApplied())
 					{
-						ABILITY_LOG(Log , TEXT("Ability %s failed to apply startup effect %s! "), *GetName(),*GetNameSafe(GameplayEffect));
+						ABILITY_LOG(Log , TEXT("Ability %s failed to apply runtime effect %s! "), *GetName(),*GetNameSafe(GameplayEffect));
 					}
 					else
 					{
