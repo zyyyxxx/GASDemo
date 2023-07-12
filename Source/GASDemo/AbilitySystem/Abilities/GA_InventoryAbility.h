@@ -30,7 +30,7 @@ public:
 	const UItemStaticData* GetEquippedItemStaticData() const;
 
 	UFUNCTION(BlueprintPure)
-	const UWeaponStaticData* GetEquippedWItemWeaponStaticData() const;
+	const UWeaponStaticData* GetEquippedItemWeaponStaticData() const;
 
 	UFUNCTION(BlueprintPure)
 	AItemActor* GetEquippedItemActor() const;

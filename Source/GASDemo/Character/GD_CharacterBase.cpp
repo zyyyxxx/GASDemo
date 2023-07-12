@@ -85,9 +85,10 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	
 }
 
-void AGD_CharacterBase::PostInitializeComponents()
+void AGD_CharacterBase::PostLoad()
 {
-	Super::PostInitializeComponents();
+	// 使用PostInitializeComponents()无法对AI起作用
+	Super::PostLoad();
 
 	if(IsValid(CharacterDataAsset))
 	{
@@ -412,7 +413,7 @@ void AGD_CharacterBase::OnAttackEnded(const FInputActionValue& Value)
 	FGameplayEventData EventPayload;
 	EventPayload.EventTag = AttackEndedEventTag;
 	
-	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackStartedEventTag , EventPayload);
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackEndedEventTag , EventPayload);
 }
 
 

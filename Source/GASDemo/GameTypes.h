@@ -107,6 +107,9 @@ public:
 	// Item的GE
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	TArray<TSubclassOf<UGameplayEffect>> OngoingEffects;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	USoundBase* AttackSound;
 };
 
 UCLASS(Blueprintable , BlueprintType)
@@ -131,6 +134,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	float FireRate;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	float BaseDamage;
 };
 
 UENUM(BlueprintType)

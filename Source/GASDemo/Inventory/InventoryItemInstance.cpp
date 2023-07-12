@@ -32,7 +32,7 @@ void UInventoryItemInstance::OnEquipped(AActor* InOwner)
 
 		const UItemStaticData* StaticData = GetItemStaticData();
 
-		// Spawn
+		// Spawn Actor 并 初始化
 		
 		FTransform Transform;
 		ItemActor = World->SpawnActorDeferred<AItemActor>(GetItemStaticData()->ItemActorClass , Transform , InOwner);

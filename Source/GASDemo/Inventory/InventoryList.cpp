@@ -20,6 +20,7 @@ void FInventoryList::AddItem(UInventoryItemInstance* InItemInstance)
 {
 	FInventoryListItem& Item = Items.AddDefaulted_GetRef();
 	Item.ItemInstance = InItemInstance;
+	MarkItemDirty(Item);
 	
 }
 

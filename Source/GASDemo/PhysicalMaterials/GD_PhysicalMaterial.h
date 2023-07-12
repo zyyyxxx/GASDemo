@@ -6,9 +6,9 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "GD_PhysicalMaterial.generated.h"
 
-/**
- * 
- */
+class USoundBase;
+class UNiagaraSystem;
+
 UCLASS()
 class GASDEMO_API UGD_PhysicalMaterial : public UPhysicalMaterial
 {
@@ -16,5 +16,12 @@ class GASDEMO_API UGD_PhysicalMaterial : public UPhysicalMaterial
 
 public:
 	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category = PhysicalMatrial)
-	class USoundBase* FootStepSound = nullptr;
+	USoundBase* FootStepSound = nullptr;
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category = PhysicalMatrial)
+	USoundBase* PointImpactSound = nullptr;
+
+	UPROPERTY(EditAnywhere , BlueprintReadWrite , Category = PhysicalMatrial)
+	UNiagaraSystem* PointImpactVFX = nullptr;
+	
 };

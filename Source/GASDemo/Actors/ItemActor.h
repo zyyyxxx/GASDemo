@@ -41,7 +41,7 @@ protected:
 	void OnRep_ItemInstance(UInventoryItemInstance* OldItemInstance);
 
 	UPROPERTY(ReplicatedUsing = OnRep_ItemState)
-	TEnumAsByte<EItemState> ItemState = EItemState::None;
+	EItemState ItemState = EItemState::None;
 
 	UFUNCTION()
 	void OnRep_ItemState();

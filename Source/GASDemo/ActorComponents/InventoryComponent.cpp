@@ -70,7 +70,7 @@ void UInventoryComponent::InitializeComponent()
 	{
 		for(auto ItemClass : DefaultItems)
 		{
-			InventoryList.AddItem(ItemClass);
+			AddItem(ItemClass);
 		}
 		
 	}
@@ -104,6 +104,7 @@ bool UInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch*
 
 void UInventoryComponent::AddItem(TSubclassOf<UItemStaticData> InItemStaticDataClass)
 {
+	// 暂未使用 
 	if(GetOwner()->HasAuthority())
 	{
 		InventoryList.AddItem(InItemStaticDataClass);

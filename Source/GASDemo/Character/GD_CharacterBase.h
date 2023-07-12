@@ -75,7 +75,7 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
 
-	virtual void PostInitializeComponents() override;
+	virtual void PostLoad() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
