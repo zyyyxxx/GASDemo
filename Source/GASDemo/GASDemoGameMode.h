@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "GASDemoGameMode.generated.h"
 
+class AGD_PlayerController;
+
 UCLASS(minimalapi)
 class AGASDemoGameMode : public AGameModeBase
 {
@@ -13,6 +15,8 @@ class AGASDemoGameMode : public AGameModeBase
 
 public:
 	AGASDemoGameMode();
+
+	void NotifyPlayerDied(AGD_PlayerController* PlayerController);
 };
 
 

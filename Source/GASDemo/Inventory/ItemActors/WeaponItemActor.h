@@ -11,7 +11,7 @@ UCLASS()
 class GASDEMO_API AWeaponItemActor : public AItemActor
 {
 	GENERATED_BODY()
-
+public:
 	AWeaponItemActor();
 
 	const UWeaponStaticData* GetWeaponStaticData() const;
@@ -24,7 +24,9 @@ class GASDEMO_API AWeaponItemActor : public AItemActor
 
 
 protected:
-
+	UFUNCTION(Server , Reliable)
+	void ServerPlayweaponEffects(const FHitResult& InHitResult);
+	
 	UFUNCTION(NetMulticast , Reliable)
 	void MulticastPlayweaponEffects(const FHitResult& InHitResult);
 

@@ -32,8 +32,14 @@ void AWeaponItemActor::PlayweaponEffects(const FHitResult& InHitResult)
 		MulticastPlayweaponEffects(InHitResult);
 	}else
 	{
+		//ServerPlayweaponEffects_Implementation(InHitResult);
 		PlayweaponEffectsInternal(InHitResult);
 	}
+}
+
+void AWeaponItemActor::ServerPlayweaponEffects_Implementation(const FHitResult& InHitResult)
+{
+	PlayweaponEffectsInternal(InHitResult);
 }
 
 
@@ -60,15 +66,13 @@ void AWeaponItemActor::PlayweaponEffectsInternal(const FHitResult& InHitResult)
 
 			UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PhysicalMaterial->PointImpactVFX ,
 				InHitResult.ImpactPoint);
-			
 		}
-
-		if(const UWeaponStaticData* WeaponStaticData = GetWeaponStaticData())
-		{
-			UGameplayStatics::PlaySoundAtLocation(this , WeaponStaticData->AttackSound ,
-				GetActorLocation() , 1.f);
-		}
-	}	
+	}
+	if(const UWeaponStaticData* WeaponStaticData = GetWeaponStaticData())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this , WeaponStaticData->AttackSound ,
+			GetActorLocation() , 1.f);
+	}
 }
 
 

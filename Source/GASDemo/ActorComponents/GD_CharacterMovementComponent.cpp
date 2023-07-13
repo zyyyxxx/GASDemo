@@ -48,8 +48,8 @@ void UGD_CharacterMovementComponent::BeginPlay()
 	{
 		/** Allow events to be registered for specific gameplay tags being added or removed */
 		// GE_EnforceStrafe 添加 Tag ，调用回调函数
-		AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("Movement.Enforced.Strafe"),
-			EGameplayTagEventType::NewOrRemoved)).
+		AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("Movement.Enforced.Strafe")),
+			EGameplayTagEventType::NewOrRemoved).
 		AddUObject(this , &UGD_CharacterMovementComponent::OnEnforcedStrafeTagChanged); // 委托绑定回调函数
 	}
 	

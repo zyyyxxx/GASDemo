@@ -14,6 +14,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemLog.h"
+#include "GameplayEffectExtension.h"
 #include "ShaderPrintParameters.h"
 #include "ActorComponents/FootstepsComponent.h"
 #include "DataAssets/CharacterDataAsset.h"
@@ -72,9 +73,17 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 
 	AttributeSet = CreateDefaultSubobject<UGD_AttributeSet>(TEXT("AttributeSet"));
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this, &AGD_CharacterBase::OnMaxMovementChanged); // 注册函数到此速度attribute改变多播委托
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetMaxMovementSpeedAttribute()).AddUObject(this,
+		&AGD_CharacterBase::OnMaxMovementChanged); // 注册函数到此速度attribute改变多播委托
 
-	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute()).AddUObject(this,
+		&AGD_CharacterBase::OnHealthAttributeChanged); // 注册函数到此声明attribute改变多播委托
+
+	// 注册回调函数到添加Tag的事件
+	AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Ragdoll")) ,
+		EGameplayTagEventType::NewOrRemoved).AddUObject(this , &AGD_CharacterBase::OnRagdollStateTagChanged);
+	
+	FootstepsComponent = CreateDefaultSubobject<UFootstepsComponent>(TEXT("FootstepsComponent"));	 
 
 	GDMotionWarpingComponent = CreateDefaultSubobject<UGD_MotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 
@@ -283,9 +292,34 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnAttackStarted);
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnAttackEnded);
 
+		//Aim
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnAimStarted);
+		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnAimEnded);
 
 	}
 
+}
+
+void AGD_CharacterBase::OnRagdollStateTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	if(NewCount > 0)
+	{
+		StartRagDoll();
+	}
+}
+
+void AGD_CharacterBase::StartRagDoll()
+{
+	USkeletalMeshComponent* SkeletalMeshComponent = GetMesh();
+	if(!GetMesh()->IsSimulatingPhysics() && SkeletalMeshComponent)
+	{
+		SkeletalMeshComponent->SetCollisionProfileName(TEXT("Ragdoll"));
+		SkeletalMeshComponent->SetSimulatePhysics(true);
+		SkeletalMeshComponent->SetAllPhysicsLinearVelocity(FVector::ZeroVector);
+		SkeletalMeshComponent->SetAllPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+		SkeletalMeshComponent->WakeAllRigidBodies();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
 void AGD_CharacterBase::Move(const FInputActionValue& Value)
@@ -406,6 +440,10 @@ void AGD_CharacterBase::OnAttackStarted(const FInputActionValue& Value)
 	EventPayload.EventTag = AttackStartedEventTag;
 	
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackStartedEventTag , EventPayload);
+	if(!HasAuthority())
+	{
+		ServerProxySendGameplayEventToActor(this , AttackStartedEventTag , EventPayload);
+	}
 }
 
 void AGD_CharacterBase::OnAttackEnded(const FInputActionValue& Value)
@@ -414,6 +452,40 @@ void AGD_CharacterBase::OnAttackEnded(const FInputActionValue& Value)
 	EventPayload.EventTag = AttackEndedEventTag;
 	
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AttackEndedEventTag , EventPayload);
+	if(!HasAuthority())
+	{
+		ServerProxySendGameplayEventToActor(this , AttackEndedEventTag , EventPayload);
+	}
+}
+
+void AGD_CharacterBase::OnAimStarted(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AimStartedEventTag;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AimStartedEventTag , EventPayload);
+	if(!HasAuthority())
+	{
+		ServerProxySendGameplayEventToActor(this , AimStartedEventTag , EventPayload);
+	}
+}
+
+void AGD_CharacterBase::OnAimEnded(const FInputActionValue& Value)
+{
+	FGameplayEventData EventPayload;
+	EventPayload.EventTag = AimEndedEventTag;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , AimEndedEventTag , EventPayload);
+	if(!HasAuthority())
+	{
+		ServerProxySendGameplayEventToActor(this , AimEndedEventTag , EventPayload);
+	}
+}
+
+void AGD_CharacterBase::ServerProxySendGameplayEventToActor_Implementation(AActor* TargetActor, FGameplayTag Tag,
+	FGameplayEventData EventPayload)
+{
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor , Tag , EventPayload);
 }
 
 
@@ -436,6 +508,32 @@ UFootstepsComponent* AGD_CharacterBase::GetFootstepComponent() const
 void AGD_CharacterBase::OnMaxMovementChanged(const FOnAttributeChangeData& Data) 
 {
 	GetCharacterMovement()->MaxWalkSpeed = Data.NewValue;
+}
+
+void AGD_CharacterBase::OnHealthAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if(Data.NewValue <= 0 && Data.OldValue > 0)
+	{
+		// 获取伤害施加者
+		//TODO 用于积分系统
+		AGD_CharacterBase* OtherCharacter = nullptr;
+
+		if(Data.GEModData)
+		{
+			const FGameplayEffectContextHandle& EffectContext = Data.GEModData->EffectSpec.GetEffectContext();
+			OtherCharacter = Cast<AGD_CharacterBase>(EffectContext.GetInstigator());
+		}
+
+		// 发送EventTag
+		FGameplayEventData EventPayload;
+		EventPayload.EventTag = ZeroHealthEventTag;
+	
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this , ZeroHealthEventTag , EventPayload);
+		if(!HasAuthority())
+		{
+			ServerProxySendGameplayEventToActor(this , ZeroHealthEventTag , EventPayload);
+		}
+	}
 }
 
 void AGD_CharacterBase::InitFromCharacterData(const FCharacterData& InCharacterData, bool bFromReplication)

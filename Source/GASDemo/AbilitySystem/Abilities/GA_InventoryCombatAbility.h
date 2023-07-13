@@ -18,5 +18,8 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	FGameplayEffectSpecHandle GetWeaponEffectSpec(const FHitResult& HitResult);
+
+	UFUNCTION(BlueprintPure)
+	const bool GetWeaponToFocusTraceResult(float TraceDistance , ETraceTypeQuery TraceType , FHitResult& OutHitResult);
 	
 };

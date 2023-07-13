@@ -71,6 +71,10 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	/** Attack Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* AttackAction;
+
+	/** Aiming Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* AimAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -90,6 +94,9 @@ public:
 	UGD_MotionWarpingComponent* GetGDMotionWarpingComponent() const;
 
 	UInventoryComponent* GetInventoryComponent() const;
+
+	// 死亡开启布娃娃模式
+	void StartRagDoll();
 	
 protected:
 
@@ -113,6 +120,12 @@ protected:
 
 	UPROPERTY()
 	UGD_CharacterMovementComponent* GDCharacterMovementComponent;
+
+	// 变为布娃娃状态回调函数
+	UFUNCTION()
+	void OnRagdollStateTagChanged(const FGameplayTag CallbackTag , int32 NewCount);
+	
+protected:
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -140,6 +153,13 @@ protected:
 	/** Called for attack input */
 	void OnAttackStarted(const FInputActionValue& Value);
 	void OnAttackEnded(const FInputActionValue& Value);
+
+	/** Called for aiming */
+	void OnAimStarted(const FInputActionValue& Value);
+	void OnAimEnded(const FInputActionValue& Value);
+
+	UFUNCTION(Server, Reliable)
+	void ServerProxySendGameplayEventToActor(AActor* TargetActor, FGameplayTag Tag, FGameplayEventData EventData);
 	
 protected:
 	// APawn interface
@@ -164,7 +184,11 @@ public:
 
 	class UFootstepsComponent* GetFootstepComponent() const;
 
+	// 最大移动速度Attribute改变的回调函数
 	void OnMaxMovementChanged(const FOnAttributeChangeData& Data);
+
+	// 生命值Attribute改变的回调函数
+	void OnHealthAttributeChanged(const FOnAttributeChangeData& Data);
 
 protected:
 	
@@ -182,7 +206,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	class UFootstepsComponent* FootstepsComponent;
 
-
+	
 	// Gameplay Events
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -194,6 +218,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTag AttackEndedEventTag;
 
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AimStartedEventTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag AimEndedEventTag;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag ZeroHealthEventTag;
+
 	// Gameplay Tags
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -204,6 +237,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	FGameplayTagContainer SprintTags;
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag RagdollStateTag;
 
 	// Gameplay Effects
 protected:
