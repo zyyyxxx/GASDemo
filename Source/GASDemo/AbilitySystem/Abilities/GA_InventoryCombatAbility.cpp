@@ -49,15 +49,29 @@ const bool UGA_InventoryCombatAbility::GetWeaponToFocusTraceResult(float TraceDi
 
 	// 第一个射线检测，从摄像机视角发射
 	UKismetSystemLibrary::LineTraceSingle(this , CameraTransform.GetLocation() ,FocusTraceEnd ,
-		TraceType ,false , ActorToIgnore , EDrawDebugTrace::None , FocusHit , true);
+		TraceType ,false , ActorToIgnore , EDrawDebugTrace::ForDuration , FocusHit , true , FColor::Blue);
 	
 	FVector MuzzleLocation = WeaponItemActor->GetMuzzleLocation();
 
-	const FVector WeaponTraceEnd = MuzzleLocation + (FocusHit.Location - MuzzleLocation).GetSafeNormal() * TraceDistance;
-
+	FVector OwnerLocation = GetGD_CharacterFromActorInfo()->GetActorLocation();
+	FVector FocusTraceEndLocationXY(FocusHit.Location - OwnerLocation);
+	FocusTraceEndLocationXY.Normalize();
+	FocusTraceEndLocationXY.Z = 0.f;
+	
+	
+	FVector WeaponTraceEnd;
+	float COS = FVector::DotProduct(FocusTraceEndLocationXY , GetGD_CharacterFromActorInfo()->GetActorForwardVector());
+	UE_LOG(LogTemp , Warning , TEXT("%f") , COS);
+	if(COS < 0.f)
+	{
+		WeaponTraceEnd = MuzzleLocation + GetGD_CharacterFromActorInfo()->GetActorForwardVector() * TraceDistance;
+	}else
+	{
+		WeaponTraceEnd = MuzzleLocation + (FocusHit.Location - MuzzleLocation).GetSafeNormal() * TraceDistance;
+	}
 	// 第二个射线检测， 从枪口出发，判断是否命中物体
 	UKismetSystemLibrary::LineTraceSingle(this , MuzzleLocation , WeaponTraceEnd ,
-		TraceType ,false , ActorToIgnore , EDrawDebugTrace::None , OutHitResult , true);
+		TraceType ,false , ActorToIgnore , EDrawDebugTrace::ForDuration , OutHitResult , true);
 	
 	return OutHitResult.bBlockingHit;
 }
