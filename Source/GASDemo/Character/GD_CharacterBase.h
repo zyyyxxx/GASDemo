@@ -159,7 +159,7 @@ protected:
 	void OnAimEnded(const FInputActionValue& Value);
 
 	UFUNCTION(Server, Reliable)
-	void ServerProxySendGameplayEventToActor(AActor* TargetActor, FGameplayTag Tag, FGameplayEventData EventData);
+	void ServerProxySendGameplayEventToActor(AActor* TargetActor, FGameplayTag Tag, FGameplayEventData EventPayload);
 	
 protected:
 	// APawn interface
