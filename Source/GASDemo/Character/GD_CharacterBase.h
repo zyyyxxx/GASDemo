@@ -97,7 +97,14 @@ public:
 
 	// 死亡开启布娃娃模式
 	void StartRagDoll();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "GASShooter|GSPlayerState|Attributes")
+	float GetHealth() const;
+
+	UFUNCTION(BlueprintCallable, Category = "GASShooter|GSPlayerState|Attributes")
+	float GetMaxHealth() const;
+
+
 protected:
 
 
@@ -109,7 +116,7 @@ protected:
 
 	
 	
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY()
 	UGD_AbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(Transient)

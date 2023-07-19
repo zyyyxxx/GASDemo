@@ -95,10 +95,6 @@ void AAbilitySystemPhysicsVolume::ActorLeavingVolume(AActor* Other)
 			if(SpecHandle.IsValid())
 			{
 				FActiveGameplayEffectHandle ActiveGEHandle  = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
-				if(ActiveGEHandle.WasSuccessfullyApplied())
-				{
-					EnteredActorsInfoMap[Other].AppliedEffects.Add(ActiveGEHandle);
-				}
 			}
 		}
 

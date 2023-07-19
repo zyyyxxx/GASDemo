@@ -40,7 +40,7 @@ AProjectile::AProjectile()
 	StaticMeshComponent->SetIsReplicated(true);
 	StaticMeshComponent->SetCollisionProfileName(TEXT("Projectile"));
 	StaticMeshComponent->bReceivesDecals = false; //不接受Decal Decal经常被用在 显示弹痕，地面叠加花纹等
-	StaticMeshComponent->SetRelativeScale3D(FVector(0.2,0.2,0.2));
+	
 }
 
 const UProjectileStaticData* AProjectile::GetProjectileStaticData() const
@@ -76,7 +76,7 @@ void AProjectile::BeginPlay()
 		ProjectileMovementComponent->ProjectileGravityScale = ProjectileStaticData->GravityMultiplayer;
 
 		ProjectileMovementComponent->Velocity = ProjectileStaticData->InitialSpeed * GetActorForwardVector();
-
+		StaticMeshComponent->SetRelativeScale3D(ProjectileStaticData->RelativeScale);
 		
 	}
 

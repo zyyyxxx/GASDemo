@@ -15,6 +15,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemLog.h"
 #include "GameplayEffectExtension.h"
+#include "GD_PlayerState.h"
 #include "ShaderPrintParameters.h"
 #include "ActorComponents/FootstepsComponent.h"
 #include "DataAssets/CharacterDataAsset.h"
@@ -25,6 +26,7 @@
 #include "ActorComponents/GD_CharacterMovementComponent.h"
 #include "ActorComponents/GD_MotionWarpingComponent.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "PlayerControllers/GD_PlayerController.h"
 
 
 AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer):
@@ -190,6 +192,17 @@ UInventoryComponent* AGD_CharacterBase::GetInventoryComponent() const
 {
 	return InventoryComponent;
 }
+
+float AGD_CharacterBase::GetHealth() const
+{
+	return AttributeSet->GetHealth();
+}
+
+float AGD_CharacterBase::GetMaxHealth() const
+{
+	return AttributeSet->GetMaxHealth();
+}
+
 
 void AGD_CharacterBase::GiveAbilities()
 {

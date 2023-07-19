@@ -14,7 +14,8 @@
 				"PhysicsCore",
 				"MotionWarping",
 				"CoreUObject",
-				"GameplayTags"
+				"GameplayTags",
+				"UMG"
 			]
 		}
 	],

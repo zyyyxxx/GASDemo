@@ -6,6 +6,40 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "GASDemoGameMode.h"
+#include "Character/GD_CharacterBase.h"
+#include "Character/GD_PlayerState.h"
+#include "UI/GD_HUDWidget.h"
+
+void AGD_PlayerController::CreateHUD()
+{
+	// Only create once
+	if (UIHUDWidget)
+	{
+		return;
+	}
+
+	if (!UIHUDWidgetClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s() Missing UIHUDWidgetClass. Please fill in on the Blueprint of the PlayerController."), *FString(__FUNCTION__));
+		return;
+	}
+
+	// Only create a HUD for local player
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+	
+	
+	UIHUDWidget = CreateWidget<UGD_HUDWidget>(this, UIHUDWidgetClass);
+	UIHUDWidget->AddToViewport();
+	
+}
+
+UGD_HUDWidget* AGD_PlayerController::GetGDHUD()
+{
+	return UIHUDWidget;
+}
 
 void AGD_PlayerController::RestartPlayerIn(float InTime)
 {
@@ -36,12 +70,29 @@ void AGD_PlayerController::OnPossess(APawn* InPawn)
 		AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")) ,
 		EGameplayTagEventType::NewOrRemoved).AddUObject(this , &AGD_PlayerController::OnPawnDeathStateChanged);
 	}
+
+	AGD_CharacterBase* OwnerCharacter = Cast<AGD_CharacterBase>(GetPawn());
+	if(!OwnerCharacter) return;
+	
+
+	// Only create a HUD for local player
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+
+	CreateHUD();
+	
+	// Set attributes
+	UIHUDWidget->SetCurrentHealth(OwnerCharacter->GetHealth());
+	UIHUDWidget->SetMaxHealth(OwnerCharacter->GetMaxHealth());
+	UIHUDWidget->SetHealthPercentage(OwnerCharacter->GetHealth() / OwnerCharacter->GetMaxHealth());
 }
 
 void AGD_PlayerController::OnUnPossess()
 {
 	Super::OnUnPossess();
-
+	
 	if(DeathStateTagDelegate.IsValid())
 	{
 		if(UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn()))
@@ -51,6 +102,28 @@ void AGD_PlayerController::OnUnPossess()
 				FGameplayTag::RequestGameplayTag(TEXT("State.Dead")) , EGameplayTagEventType::NewOrRemoved);
 		}
 	}
+}
+
+void AGD_PlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	AGD_CharacterBase* OwnerCharacter = Cast<AGD_CharacterBase>(GetPawn());
+	if(!OwnerCharacter) return;
+	
+
+	// Only create a HUD for local player
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+
+	CreateHUD();
+	
+	// Set attributes
+	UIHUDWidget->SetCurrentHealth(OwnerCharacter->GetHealth());
+	UIHUDWidget->SetMaxHealth(OwnerCharacter->GetMaxHealth());
+	UIHUDWidget->SetHealthPercentage(OwnerCharacter->GetHealth() / OwnerCharacter->GetMaxHealth());
 }
 
 void AGD_PlayerController::OnPawnDeathStateChanged(const FGameplayTag CallbackTag, int32 NewCount)

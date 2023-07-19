@@ -138,6 +138,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	float BaseDamage;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	float MaxAmmoAmount;
 };
 
 UENUM(BlueprintType)
@@ -178,6 +181,9 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	float MaxSpeed = 3000.f;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	FVector RelativeScale;
 
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	UStaticMesh* StaticMesh;
