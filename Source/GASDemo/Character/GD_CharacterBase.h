@@ -213,6 +213,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	class UFootstepsComponent* FootstepsComponent;
 
+	UPROPERTY(BlueprintReadOnly , EditDefaultsOnly)
+	class UProjectilePool* ProjectilePoolComponent;
+public:
+	
+	FORCEINLINE UProjectilePool* GetProjectilePool() const {return ProjectilePoolComponent;}
 	
 	// Gameplay Events
 protected:

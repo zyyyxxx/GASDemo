@@ -26,6 +26,7 @@
 #include "ActorComponents/GD_CharacterMovementComponent.h"
 #include "ActorComponents/GD_MotionWarpingComponent.h"
 #include "ActorComponents/InventoryComponent.h"
+#include "Inventory/ProjectilePool.h"
 #include "PlayerControllers/GD_PlayerController.h"
 
 
@@ -93,6 +94,8 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	InventoryComponent->SetIsReplicated(true);
 
 	GDMotionWarpingComponent->SetIsReplicated(true);
+
+	ProjectilePoolComponent = CreateDefaultSubobject<UProjectilePool>(TEXT("ProjectilePool"));
 	
 }
 

@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GDGameStatics.generated.h"
 
+class UProjectilePool;
 class UItemStaticData;
 
 UCLASS()
@@ -27,5 +28,5 @@ public:
 	// 发射子弹
 	UFUNCTION(BlueprintCallable , meta = (WorldContext = "WorldContextObject"))
 	static AProjectile* LaunchProjectile(UObject* WorldContextObject , TSubclassOf<UProjectileStaticData> ProjectileDataClass,
-	FTransform Transform , AActor* Owner , APawn* Instigator);
+	FTransform Transform , AActor* Owner , APawn* Instigator , UParticleSystem* ParticleEffect = nullptr, TSubclassOf<UCameraShakeBase> ImpactShake = nullptr , UProjectilePool* ProjectilePool = nullptr);
 };

@@ -1,7 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GASDemoGameMode.h"
-#include "GASDemoCharacter.h"
 #include "PlayerControllers/GD_PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 

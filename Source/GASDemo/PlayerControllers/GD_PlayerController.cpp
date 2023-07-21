@@ -57,6 +57,23 @@ void AGD_PlayerController::RestartPlayer()
 	if(GameMode)
 	{
 		GameMode->RestartPlayer(this);
+		
+		AGD_CharacterBase* OwnerCharacter = Cast<AGD_CharacterBase>(GetPawn());
+		if(!OwnerCharacter) return;
+	
+
+		// Only create a HUD for local player
+		if (!IsLocalPlayerController())
+		{
+			return;
+		}
+
+		CreateHUD();
+	
+		// Set attributes
+		UIHUDWidget->SetCurrentHealth(OwnerCharacter->GetHealth());
+		UIHUDWidget->SetMaxHealth(OwnerCharacter->GetMaxHealth());
+		UIHUDWidget->SetHealthPercentage(OwnerCharacter->GetHealth() / OwnerCharacter->GetMaxHealth());
 	}
 }
 
@@ -70,23 +87,6 @@ void AGD_PlayerController::OnPossess(APawn* InPawn)
 		AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(TEXT("State.Dead")) ,
 		EGameplayTagEventType::NewOrRemoved).AddUObject(this , &AGD_PlayerController::OnPawnDeathStateChanged);
 	}
-
-	AGD_CharacterBase* OwnerCharacter = Cast<AGD_CharacterBase>(GetPawn());
-	if(!OwnerCharacter) return;
-	
-
-	// Only create a HUD for local player
-	if (!IsLocalPlayerController())
-	{
-		return;
-	}
-
-	CreateHUD();
-	
-	// Set attributes
-	UIHUDWidget->SetCurrentHealth(OwnerCharacter->GetHealth());
-	UIHUDWidget->SetMaxHealth(OwnerCharacter->GetMaxHealth());
-	UIHUDWidget->SetHealthPercentage(OwnerCharacter->GetHealth() / OwnerCharacter->GetMaxHealth());
 }
 
 void AGD_PlayerController::OnUnPossess()
@@ -130,6 +130,13 @@ void AGD_PlayerController::OnPawnDeathStateChanged(const FGameplayTag CallbackTa
 {
 	if(NewCount > 0)
 	{
+		if(UIHUDWidget)
+		{
+			UIHUDWidget->RemoveFromParent();
+			UIHUDWidget->MarkAsGarbage();
+			UIHUDWidget = nullptr;
+		}
+		
 		UWorld* World = GetWorld();
 
 		AGASDemoGameMode* GameMode = World ? Cast<AGASDemoGameMode>(World->GetAuthGameMode()) : nullptr;

@@ -6,7 +6,9 @@
 #include "GDGameStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GD_CharacterBase.h"
+#include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Inventory/ProjectilePool.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -39,7 +41,18 @@ AProjectile::AProjectile()
 	StaticMeshComponent->SetupAttachment(GetRootComponent());
 	StaticMeshComponent->SetIsReplicated(true);
 	StaticMeshComponent->SetCollisionProfileName(TEXT("Projectile"));
+	
 	StaticMeshComponent->bReceivesDecals = false; //不接受Decal Decal经常被用在 显示弹痕，地面叠加花纹等
+	//StaticMeshComponent->OnComponentBeginOverlap.AddDynamic(this , &AProjectile::OnProjectileBeginOverlap);
+	//StaticMeshComponent->SetGenerateOverlapEvents(true);
+	//StaticMeshComponent->SetSimulatePhysics(true);
+	
+	EffectComp = CreateDefaultSubobject<UParticleSystemComponent>("EffectComp");
+	EffectComp->SetupAttachment(GetRootComponent());
+	
+
+	ImpactShakeInnerRadius = 0.0f;
+	ImpactShakeOuterRadius = 1500.0f;
 	
 }
 
@@ -50,6 +63,47 @@ const UProjectileStaticData* AProjectile::GetProjectileStaticData() const
 		return GetDefault<UProjectileStaticData>(ProjectileDataClass);
 	}
 	return nullptr;
+}
+
+void AProjectile::SetProjectileEffect(UParticleSystem* InParticleEffect , TSubclassOf<UCameraShakeBase> InImpactShake)
+{
+	EffectComp->SetTemplate(InParticleEffect);
+	ImpactShake = InImpactShake;
+}
+
+void AProjectile::SetVelocity(FVector Velocity)
+{
+	ProjectileMovementComponent->Velocity = Velocity;
+}
+
+void AProjectile::OnReturnToPool()
+{
+	const UProjectileStaticData* ProjectileStaticData = GetProjectileStaticData();
+	// 播放效果
+	if(ProjectileStaticData)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this , ProjectileStaticData->OnStopSFX , GetActorLocation() , 1.f);
+
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this , ProjectileStaticData->OnStopVFX , GetActorLocation());
+	}
+	
+}
+
+void AProjectile::SetActivate(FTransform Transform)
+{
+	
+	// 更新组件的速度
+	ProjectileMovementComponent->UpdateComponentVelocity();
+
+	SetActorTransform(Transform);
+	SetActorLocation(Transform.GetLocation());
+	SetActorRelativeScale3D(ProjectileDataClass.GetDefaultObject()->RelativeScale);
+	SetVelocity(ProjectileDataClass.GetDefaultObject()->InitialSpeed * Transform.GetRotation().GetForwardVector());
+	
+	// 将 UpdatedComponent 设置为非 NULL，以使子弹再次更新位置和旋转
+	ProjectileMovementComponent->SetUpdatedComponent(StaticMeshComponent);
+	
+	
 }
 
 // Called when the game starts or when spawned
@@ -75,7 +129,8 @@ void AProjectile::BeginPlay()
 		ProjectileMovementComponent->Bounciness = 0.f;
 		ProjectileMovementComponent->ProjectileGravityScale = ProjectileStaticData->GravityMultiplayer;
 
-		ProjectileMovementComponent->Velocity = ProjectileStaticData->InitialSpeed * GetActorForwardVector();
+		//ProjectileMovementComponent->Velocity = ProjectileStaticData->InitialSpeed * GetActorForwardVector();
+		ProjectileMovementComponent->Velocity = FVector::ZeroVector;
 		StaticMeshComponent->SetRelativeScale3D(ProjectileStaticData->RelativeScale);
 		
 	}
@@ -91,7 +146,7 @@ void AProjectile::BeginPlay()
 
 void AProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	const UProjectileStaticData* ProjectileStaticData = GetProjectileStaticData();
+	/*const UProjectileStaticData* ProjectileStaticData = GetProjectileStaticData();
 	// 播放效果
 	if(ProjectileStaticData)
 	{
@@ -99,7 +154,7 @@ void AProjectile::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this , ProjectileStaticData->OnStopVFX , GetActorLocation());
 	}
-	Super::EndPlay(EndPlayReason);
+	Super::EndPlay(EndPlayReason);*/
 }
 
 void AProjectile::DebugDrawPath() const
@@ -142,9 +197,56 @@ void AProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 			ProjectileStaticData->Effects ,
 			ProjectileStaticData->RadialDamageQueryTypes,
 			ProjectileStaticData->RadialDamageTraceType);
+
+		
+		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), ImpactShakeInnerRadius, ImpactShakeOuterRadius);
+		
 	}
-	// Projectile停下后销毁 触发EndPlay
-	Destroy();
+	// Projectile停下
+
+	
+	// 播放效果
+	if(ProjectileStaticData)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this , ProjectileStaticData->OnStopSFX , GetActorLocation() , 1.f);
+
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this , ProjectileStaticData->OnStopVFX , GetActorLocation());
+	}
+	
+	
+	AGD_CharacterBase* CharacterOwner = Cast<AGD_CharacterBase>(GetOwner());
+	UProjectilePool* OwnerPool = Cast<UProjectilePool>(CharacterOwner->GetProjectilePool());
+	
+	OwnerPool->ReturnProjectileToPool(this);
+
+	
+	//Destroy();
+}
+
+void AProjectile::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	const UProjectileStaticData* ProjectileStaticData = GetProjectileStaticData();
+
+	if(!OtherActor || OtherActor == GetInstigator()) return;
+	
+	if(ProjectileStaticData)
+	{
+		UGDGameStatics::ApplyRadialDamage(this , GetOwner() , GetActorLocation() ,
+			ProjectileStaticData->DamageRadius,
+			ProjectileStaticData->BaseDamage,
+			ProjectileStaticData->Effects ,
+			ProjectileStaticData->RadialDamageQueryTypes,
+			ProjectileStaticData->RadialDamageTraceType);
+
+		
+		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), ImpactShakeInnerRadius, ImpactShakeOuterRadius);
+		
+	}
+	// Projectile停下后销毁
+	AGD_CharacterBase* CharacterOwner = Cast<AGD_CharacterBase>(GetOwner());
+	UProjectilePool* OwnerPool = Cast<UProjectilePool>(CharacterOwner->GetProjectilePool());
+	OwnerPool->ReturnProjectileToPool(this);
 }
 
 

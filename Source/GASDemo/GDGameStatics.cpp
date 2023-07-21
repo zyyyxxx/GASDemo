@@ -7,6 +7,7 @@
 #include "AbilitySystemComponent.h"
 #include "GameTypes.h"
 #include "Actors/Projectile.h"
+#include "Inventory/ProjectilePool.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 static TAutoConsoleVariable<int32> CVarShowRadialDamage
@@ -126,21 +127,80 @@ void UGDGameStatics::ApplyRadialDamage(UObject* WorldContextObject, AActor* Dama
 	}
 }
 
+
+
 AProjectile* UGDGameStatics::LaunchProjectile(UObject* WorldContextObject,
-	TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator)
+                                              TSubclassOf<UProjectileStaticData> ProjectileDataClass, FTransform Transform, AActor* Owner, APawn* Instigator ,
+                                              UParticleSystem* ParticleEffect, TSubclassOf<UCameraShakeBase> ImpactShake , UProjectilePool* ProjectilePool)
 {
 	UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
 
-	if(World && World->IsServer()) // 服务器生成子弹
+	if(World && Owner->HasAuthority()) // 服务器生成子弹
 	{
-		if(AProjectile* Projectile = World->SpawnActorDeferred<AProjectile>(AProjectile::StaticClass() ,
-			Transform , Owner , Instigator , ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
+		AProjectile* Projectile = nullptr;
+		if(IsValid(ProjectilePool))
 		{
+			if(ProjectilePool->FirstInit)
+			{
+				ProjectilePool->InitProjectilePool();
+			}
+			
+			Projectile = ProjectilePool->GetProjectileFromPool(ProjectileDataClass);
+
+			Projectile->SetActivate(Transform);
+			
+
+			
+			if(ParticleEffect && ImpactShake)
+			{
+				Projectile->SetProjectileEffect(ParticleEffect , ImpactShake);
+				APawn * MyOwner = Cast<APawn>(Instigator);
+				if (MyOwner)
+				{
+					APlayerController * PC = Cast<APlayerController>(MyOwner->GetController());
+					if (PC)
+					{
+						APlayerCameraManager* CameraManager = PC->PlayerCameraManager;
+						if(CameraManager)
+						{
+							CameraManager->StartCameraShake(ImpactShake , 2);
+						}
+					}
+				}
+			}
+		}
+
+		if(Projectile) return Projectile;
+		
+		if(!Projectile)
+		{
+			Projectile = World->SpawnActorDeferred<AProjectile>(AProjectile::StaticClass() ,Transform , Owner , Instigator , ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+			if(ParticleEffect && ImpactShake)
+			{
+				Projectile->SetProjectileEffect(ParticleEffect , ImpactShake);
+				APawn * MyOwner = Cast<APawn>(Instigator);
+				if (MyOwner)
+				{
+					APlayerController * PC = Cast<APlayerController>(MyOwner->GetController());
+					if (PC)
+					{
+						APlayerCameraManager* CameraManager = PC->PlayerCameraManager;
+						if(CameraManager)
+						{
+							CameraManager->StartCameraShake(ImpactShake , 2);
+						}
+					}
+				}
+			}
 			Projectile->ProjectileDataClass = ProjectileDataClass;
 			Projectile->FinishSpawning(Transform);
 
 			return Projectile;
 		}
+
+		
+
+		
 	}
 
 	return nullptr;

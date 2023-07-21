@@ -8,6 +8,9 @@
 #include "Projectile.generated.h"
 
 
+class USphereComponent;
+class UParticleSystemComponent;
+class UCameraShakeBase;
 
 UCLASS()
 class GASDEMO_API AProjectile : public AActor
@@ -22,7 +25,15 @@ public:
 
 	UPROPERTY(BlueprintReadOnly , Replicated)
 	TSubclassOf<UProjectileStaticData> ProjectileDataClass;
-		
+
+	void SetProjectileEffect(UParticleSystem* InParticleEffect , TSubclassOf<UCameraShakeBase> InImpactShake);
+
+	void SetVelocity(FVector Velocity);
+
+	void OnReturnToPool();
+
+	void SetActivate(FTransform Transform);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -38,7 +49,25 @@ protected:
 	UPROPERTY()
 	UStaticMeshComponent* StaticMeshComponent = nullptr;
 
+	UPROPERTY()
+	USphereComponent* SphereComponent;
+	
 	UFUNCTION()
 	void OnProjectileStop(const FHitResult& ImpactResult);
+
+	UFUNCTION()
+	void OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UParticleSystemComponent* EffectComp;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	TSubclassOf<UCameraShakeBase> ImpactShake;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	float ImpactShakeInnerRadius;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Effects|Shake")
+	float ImpactShakeOuterRadius;
 };

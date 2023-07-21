@@ -49,7 +49,7 @@ const bool UGA_InventoryCombatAbility::GetWeaponToFocusTraceResult(float TraceDi
 
 	// 第一个射线检测，从摄像机视角发射
 	UKismetSystemLibrary::LineTraceSingle(this , CameraTransform.GetLocation() ,FocusTraceEnd ,
-		TraceType ,false , ActorToIgnore , EDrawDebugTrace::ForDuration , FocusHit , true , FColor::Blue);
+		TraceType ,false , ActorToIgnore , EDrawDebugTrace::None , FocusHit , true , FColor::Blue);
 	
 	FVector MuzzleLocation = WeaponItemActor->GetMuzzleLocation();
 
@@ -71,7 +71,7 @@ const bool UGA_InventoryCombatAbility::GetWeaponToFocusTraceResult(float TraceDi
 	}
 	// 第二个射线检测， 从枪口出发，判断是否命中物体
 	UKismetSystemLibrary::LineTraceSingle(this , MuzzleLocation , WeaponTraceEnd ,
-		TraceType ,false , ActorToIgnore , EDrawDebugTrace::ForDuration , OutHitResult , true);
+		TraceType ,false , ActorToIgnore , EDrawDebugTrace::None , OutHitResult , true);
 	
 	return OutHitResult.bBlockingHit;
 }

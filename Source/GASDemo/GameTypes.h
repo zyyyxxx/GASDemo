@@ -160,12 +160,23 @@ enum class EMovementDirectionType: uint8
 	Strafe UMETA(DisplayName = "Strafe"), // 扫射 跟随controler旋转
 };
 
+UENUM(BlueprintType)
+enum class EProjectileType: uint8
+{
+	Pistol  UMETA(DisplayName = "Pistol"),
+	Rifle UMETA(DisplayName = "Rifle"),
+	Rocket UMETA(DisplayName = "Rocket"),
+};
+
 UCLASS(Blueprintable , BlueprintType)
 class UProjectileStaticData : public UObject
 {
 	GENERATED_BODY()
 
 public:
+
+	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
+	EProjectileType ProjectileType;
 	
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	float BaseDamage;
@@ -205,3 +216,4 @@ public:
 	
 	
 };
+
