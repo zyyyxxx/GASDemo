@@ -89,9 +89,8 @@ void AProjectile::OnReturnToPool()
 	
 }
 
-void AProjectile::SetActivate(FTransform Transform)
+void AProjectile::SetActivate_Implementation(FTransform Transform)
 {
-	
 	// 更新组件的速度
 	ProjectileMovementComponent->UpdateComponentVelocity();
 
@@ -102,9 +101,9 @@ void AProjectile::SetActivate(FTransform Transform)
 	
 	// 将 UpdatedComponent 设置为非 NULL，以使子弹再次更新位置和旋转
 	ProjectileMovementComponent->SetUpdatedComponent(StaticMeshComponent);
-	
-	
 }
+
+
 
 // Called when the game starts or when spawned
 void AProjectile::BeginPlay()

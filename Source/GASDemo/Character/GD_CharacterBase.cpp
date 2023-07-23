@@ -96,6 +96,7 @@ AGD_CharacterBase::AGD_CharacterBase(const FObjectInitializer& ObjectInitializer
 	GDMotionWarpingComponent->SetIsReplicated(true);
 
 	ProjectilePoolComponent = CreateDefaultSubobject<UProjectilePool>(TEXT("ProjectilePool"));
+	ProjectilePoolComponent->SetIsReplicated(true);
 	
 }
 

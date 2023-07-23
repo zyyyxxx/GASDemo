@@ -32,6 +32,7 @@ public:
 
 	void OnReturnToPool();
 
+	UFUNCTION(NetMulticast , Unreliable)
 	void SetActivate(FTransform Transform);
 
 protected:
