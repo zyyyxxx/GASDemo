@@ -15,7 +15,8 @@ void UMainMenuUserWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	CreateSessionCompleteDelegate.BindUObject(this, &UMainMenuUserWidget::OnCreateSessionComplete);
-	FindSessionsCompleteDelegate.BindUObject(this , &UMainMenuUserWidget::OnFindSessionComplete);	
+	FindSessionsCompleteDelegate.BindUObject(this , &UMainMenuUserWidget::OnFindSessionComplete);
+	JoinSessionCompleteDelegate.BindUObject(this,&UMainMenuUserWidget::OnJoinSessionComplete);
 
 	
 }
@@ -99,6 +100,31 @@ bool UMainMenuUserWidget::OnSearchGameButtonClicked()
 	
 }
 
+void UMainMenuUserWidget::OnJoinGameButtonClicked(FString SessionIdStr)
+{
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (SessionInterface.IsValid())
+		{
+			SessionInterface->AddOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegate);
+			
+			const ULocalPlayer* LocalPlayer = GetOwningPlayer()->GetLocalPlayer();
+
+			for(auto Result : SessionSearch->SearchResults)
+			{
+				if(SessionIdStr == Result.GetSessionIdStr())
+				{
+					SessionInterface->JoinSession(*LocalPlayer->GetPreferredUniqueNetId() , NAME_GameSession , Result);
+				}
+				
+			}
+				
+		}
+	}
+}
+
 void UMainMenuUserWidget::OnCreateSessionComplete(FName SessionName , bool bWasSuccessful)
 {
 	UWorld* World = GetWorld();
@@ -114,9 +140,34 @@ void UMainMenuUserWidget::OnFindSessionComplete(bool bWasSuccessful)
 	SearchResultNum = SessionSearch->SearchResults.Num();
 	for(auto Result : SessionSearch->SearchResults)
 	{
-		SearchID.Add(Result.GetSessionIdStr());
-		User.Add(Result.Session.OwningUserName);
+		SearchedID.AddUnique(Result.GetSessionIdStr());
+		FString Info = Result.Session.OwningUserName + "(" + Result.GetSessionIdStr() + ")";
 		
+		Info += "Ping: " + FString::FromInt(Result.PingInMs) + " ms " + FString::FromInt(Result.Session.SessionSettings.NumPublicConnections-Result.Session.NumOpenPublicConnections) +
+			"/" + FString::FromInt(Result.Session.SessionSettings.NumPublicConnections);
+		
+		SearchInfo.AddUnique(Info);
 	}
 	
+}
+
+void UMainMenuUserWidget::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if(OnlineSubsystem)
+	{
+		IOnlineSessionPtr SessionInterface = OnlineSubsystem->GetSessionInterface();
+		if (SessionInterface.IsValid())
+		{
+			FString Address;
+			if(SessionInterface->GetResolvedConnectString(NAME_GameSession , Address))
+			{
+				APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+				if(PlayerController)
+				{
+					PlayerController->ClientTravel(Address , TRAVEL_Absolute);
+				}
+			}
+		}
+	}
 }
