@@ -130,7 +130,7 @@ void AGD_PlayerController::OnPawnDeathStateChanged(const FGameplayTag CallbackTa
 {
 	if(NewCount > 0)
 	{
-		if(UIHUDWidget)
+		if(UIHUDWidget && IsLocalController())
 		{
 			UIHUDWidget->RemoveFromParent();
 			UIHUDWidget->MarkAsGarbage();

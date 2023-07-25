@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "GASDemoGameMode.h"
+
+#include "Kismet/GameplayStatics.h"
 #include "PlayerControllers/GD_PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -22,4 +24,21 @@ void AGASDemoGameMode::NotifyPlayerDied(AGD_PlayerController* PlayerController)
 	{
 		PlayerController->RestartPlayerIn(2.f);
 	}
+}
+
+void AGASDemoGameMode::GetSeamlessTravelActorList(bool bToTransition, TArray<AActor*>& ActorList)
+{
+	Super::GetSeamlessTravelActorList(bToTransition, ActorList);
+	
+	// Add the main player controller to the actor list
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if (PlayerController)
+	{
+		ActorList.Add(PlayerController);
+	}
+}
+
+void AGASDemoGameMode::ChangeMap(const FString& MapName)
+{
+	GetWorld()->ServerTravel(MapName);
 }
