@@ -8,7 +8,11 @@
 
 ARandomMapGameMode::ARandomMapGameMode()
 {
-	//GetWorld()->SpawnActor(RandomMapActor);
 	
+}
+
+void ARandomMapGameMode::BeginPlay()
+{
+	Super::BeginPlay();
 }
 

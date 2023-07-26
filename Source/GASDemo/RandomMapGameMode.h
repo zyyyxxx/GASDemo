@@ -16,7 +16,7 @@ class GASDEMO_API ARandomMapGameMode : public AGASDemoGameMode
 	
 public:
 	ARandomMapGameMode();
-
+	virtual void BeginPlay() override;
 	
 protected:
 	
