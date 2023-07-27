@@ -18,11 +18,7 @@ public:
 	ARandomMapGameMode();
 	virtual void BeginPlay() override;
 	
-protected:
 	
 	
-	UPROPERTY(EditAnywhere, Category = "Random Map")
-	TSubclassOf<AActor> RandomMapActor;
-
 	
 };

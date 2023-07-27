@@ -48,6 +48,8 @@ protected:
 	UPROPERTY()
 	TArray<UStaticMeshComponent*> Meshes;
 	
+	TMap<TTuple<int , int> , TTuple<int , int>> RoomMap;
+	
 	// 房间数量
 	UPROPERTY(EditDefaultsOnly , Category="RandomMap")
 	int RoomNum = 10;
