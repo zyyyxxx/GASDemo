@@ -12,7 +12,7 @@ AGASDemoGameMode::AGASDemoGameMode()
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_GD_CharacterBase"));//静态加载 在构造函数中完成
 	if (PlayerPawnBPClass.Class != NULL)
 	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
+	//	DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 
 	PlayerControllerClass = AGD_PlayerController::StaticClass();
