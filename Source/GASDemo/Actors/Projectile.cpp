@@ -7,10 +7,13 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Character/GD_CharacterBase.h"
 #include "Components/SphereComponent.h"
+#include "Field/FieldSystemActor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Inventory/ProjectilePool.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "Field/FieldSystem.h"
+
 
 static TAutoConsoleVariable<int32> CVarShowProjetiles
 {
@@ -197,6 +200,25 @@ void AProjectile::OnProjectileStop(const FHitResult& ImpactResult)
 			ProjectileStaticData->RadialDamageQueryTypes,
 			ProjectileStaticData->RadialDamageTraceType);
 
+		auto ForceField = ProjectileStaticData->ForceField;
+		
+		if(IsValid(ForceField))
+		{
+			FTransform Transform = GetActorTransform();
+			AGD_CharacterBase* CharacterOwner = Cast<AGD_CharacterBase>(GetOwner());
+			if(CharacterOwner)
+			{
+				auto SpawnedForceField = GetWorld()->SpawnActorDeferred<AFieldSystemActor>(ForceField.Get() ,Transform , Owner , CharacterOwner , ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+				if(SpawnedForceField)
+				{
+					SpawnedForceField->SetActorLocation(GetActorLocation());
+					SpawnedForceField->SetActorRelativeScale3D(ProjectileStaticData->ForceRelativeScale);
+					SpawnedForceField->FinishSpawning(Transform);
+				}
+				
+			}
+			
+		}
 		
 		UGameplayStatics::PlayWorldCameraShake(this, ImpactShake, GetActorLocation(), ImpactShakeInnerRadius, ImpactShakeOuterRadius);
 		

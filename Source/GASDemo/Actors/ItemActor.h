@@ -54,7 +54,7 @@ protected:
 		const FHitResult& SweepResult);
 	
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere , BlueprintReadOnly)
 	TSubclassOf<UItemStaticData> ItemStaticDataClass;
 
 	virtual void InitInternal();

@@ -2,12 +2,14 @@
 
 #pragma once
 
+#include "Field/FieldSystemActor.h"
 #include "CoreMinimal.h"
 #include "GameTypes.h"
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
 
+class AFieldSystemActor;
 class USphereComponent;
 class UParticleSystemComponent;
 class UCameraShakeBase;

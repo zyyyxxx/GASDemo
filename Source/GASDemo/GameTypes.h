@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameTypes.generated.h"
 
+class AFieldSystemActor;
 class AItemActor;
 class UGameplayAbility;
 class UGameplayEffect;
@@ -213,7 +214,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
 	USoundBase* OnStopSFX = nullptr;
-	
+
+	UPROPERTY(EditDefaultsOnly,  BlueprintReadOnly)
+	TSubclassOf<AFieldSystemActor> ForceField = nullptr;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly)
+	FVector ForceRelativeScale = {1 ,1 ,1};
 	
 };
 

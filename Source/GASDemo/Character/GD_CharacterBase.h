@@ -93,6 +93,7 @@ public:
 
 	UGD_MotionWarpingComponent* GetGDMotionWarpingComponent() const;
 
+	UFUNCTION(BlueprintCallable)
 	UInventoryComponent* GetInventoryComponent() const;
 
 	// 死亡开启布娃娃模式

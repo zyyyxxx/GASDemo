@@ -17,6 +17,11 @@
 				"GameplayTags",
 				"UMG"
 			]
+		},
+		{
+			"Name": "Chaos",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [
@@ -37,6 +42,10 @@
 		},
 		{
 			"Name": "AnimationLocomotionLibrary",
+			"Enabled": true
+		},
+		{
+			"Name": "AnimationWarping",
 			"Enabled": true
 		}
 	]
