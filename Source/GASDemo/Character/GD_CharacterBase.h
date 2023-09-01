@@ -182,6 +182,8 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	FORCEINLINE UGD_CharacterMovementComponent* GetGD_CharacterMovementComponent() const{ return GDCharacterMovementComponent;}
+
 public:
 	// FCharacterData 接口函数
 	UFUNCTION(BlueprintCallable)

@@ -72,7 +72,7 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 
 	float MaxJumpDistance = HorizontalTraceLength;
 
-	// 进行水平球体检测
+	// 进行多个水平球体检测
 	for(; i < HorizontalTraceCount ; ++i)
 	{
 		const FVector TraceStart = StartLocation + i * UpVector * HorizontalTraceStep;
@@ -88,14 +88,14 @@ bool UGA_Vault::CommitCheck(const FGameplayAbilitySpecHandle Handle, const FGame
 				JumpToLocationIdx = i;
 				JumpToLocation = TraceHit.Location; 
 			}
-			else if(JumpToLocationIdx == (i-1))
+			else if(JumpToLocationIdx == (i-1)) //记录了JumpToLocation后 我们还遇到了障碍物
 			{
 				// 遇到了障碍物，我们需要更新跳跃距离，不再是TraceLenght
 				MaxJumpDistance = FVector::Dist2D(TraceHit.Location , TraceStart); //Euclidean distance between two points in the XY plane (ignoring Z)
 				break;
 			}
 		}
-		else
+		else // 没有检测到障碍物
 		{
 			if(JumpToLocationIdx != INDEX_NONE)
 			{

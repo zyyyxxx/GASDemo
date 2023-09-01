@@ -67,6 +67,25 @@ void UGD_CharacterMovementComponent::OnEnforcedStrafeTagChanged(const FGameplayT
 }
 
 
+TArray<FHitResult> UGD_CharacterMovementComponent::ClimbDoCapsuleTraceMultiByObject(const FVector& Start, const FVector& End,
+	bool bShowDebugShape)
+{
+	TArray<FHitResult> OutCapsuleTraceHitResults;
+	
+	UKismetSystemLibrary::CapsuleTraceMultiForObjects(
+			this , Start , End , ClimbCapsuleTraceRadius , ClimbCapsuleTraceHeight ,
+			ClimbTraceObjectTypes ,false , TArray<AActor*>() ,
+			bShowDebugShape? EDrawDebugTrace::ForOneFrame : EDrawDebugTrace::None ,
+			OutCapsuleTraceHitResults , false);
+
+	return OutCapsuleTraceHitResults;
+}
+
+void UGD_CharacterMovementComponent::TraceClimableSurfaces()
+{
+	//ClimbDoCapsuleTraceMultiByObject();
+}
+
 void UGD_CharacterMovementComponent::HandleMovementDirection()
 {
 	switch(MovementDirectionType)

@@ -38,5 +38,23 @@ protected:
 	UPROPERTY(EditAnywhere)
 	EMovementDirectionType MovementDirectionType;
 
+
+#pragma region Climb;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<TEnumAsByte<EObjectTypeQuery>> ClimbTraceObjectTypes;
+	
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float ClimbCapsuleTraceRadius = 50.0f;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float ClimbCapsuleTraceHeight = 72.0f;
+	
+	TArray<FHitResult> ClimbDoCapsuleTraceMultiByObject(const FVector& Start , const FVector& End , bool bShowDebugShape = false);
+
+	void TraceClimableSurfaces();
+	
+#pragma endregion 
+
 	void HandleMovementDirection();
 };
