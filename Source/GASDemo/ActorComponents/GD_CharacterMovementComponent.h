@@ -7,6 +7,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GD_CharacterMovementComponent.generated.h"
 
+UENUM(BlueprintType)
+namespace ECustomMovementMode
+{
+	enum Type
+	{
+		MOVE_Climb UMETA(DisplayName = "Climb Mode")
+	};
+}
+
+
 struct FGameplayTag;
 class UAbilitySystemComponent;
 class UGameplayAbility;
@@ -39,8 +49,24 @@ protected:
 	EMovementDirectionType MovementDirectionType;
 
 
-#pragma region Climb;
+#pragma region Climb
+	 
+public:
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void ToggleClimbing(bool bEnableClimb);
+	
+	bool IsClimbing() const;
+	bool CanStartClimbing();
 
+	void StartClimbing();
+	void StopClimbing();
+
+	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+	virtual float GetMaxSpeed() const override;
+	virtual float GetMaxAcceleration() const override;
+
+protected:
 	UPROPERTY(EditDefaultsOnly)
 	TArray<TEnumAsByte<EObjectTypeQuery>> ClimbTraceObjectTypes;
 	
@@ -50,10 +76,35 @@ protected:
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
 	float ClimbCapsuleTraceHeight = 72.0f;
 	
-	TArray<FHitResult> ClimbDoCapsuleTraceMultiByObject(const FVector& Start , const FVector& End , bool bShowDebugShape = false);
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float MaxBreakClimbDeceleration = 400.0f;
 
-	void TraceClimableSurfaces();
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float MaxClimbSpeed = 100.0f;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float MaxClimbAcceleration = 300.0f;
 	
+	TArray<FHitResult> ClimbableSurfacesTraceResults;
+
+	FVector CurrentClimbableSurfaceLocation;
+	FVector CurrentClimbableSurfaceNormal;
+	
+	TArray<FHitResult> ClimbDoCapsuleTraceMultiByObject(const FVector& Start , const FVector& End ,
+		bool bShowDebugShape = false , bool bDrawPersistantShape = false);
+	FHitResult ClimbDoLineTraceSingleByObject(const FVector& Start , const FVector& End ,
+		bool bShowDebugShape = false , bool bDrawPersistantShape = false);
+
+	bool TraceClimbableSurfaces();
+	FHitResult TraceFromEyeHeight(float TraceDistance , float TraceStartOffset = 0.f);
+
+	void PhysClimb(float deltaTime, int32 Iterations);
+
+	void ProcessClimbableSurfaceInfo();
+
+	FQuat GetClimbRotation(float DeltaTime);
+
+	void SnapMovementToClimbableSurfaces(float DeltaTime);
 #pragma endregion 
 
 	void HandleMovementDirection();

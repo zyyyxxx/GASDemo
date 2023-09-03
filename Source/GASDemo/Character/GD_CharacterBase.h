@@ -75,6 +75,10 @@ class GASDEMO_API AGD_CharacterBase : public ACharacter , public IAbilitySystemI
 	/** Aiming Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* AimAction;
+
+	/** Climbing Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* ClimbAction;
 	
 public:
 	AGD_CharacterBase(const FObjectInitializer& ObjectInitializer);
@@ -165,6 +169,9 @@ protected:
 	/** Called for aiming */
 	void OnAimStarted(const FInputActionValue& Value);
 	void OnAimEnded(const FInputActionValue& Value);
+
+	/** Called for aiming */
+	void OnClimbStarted(const FInputActionValue& Value);
 
 	UFUNCTION(Server, Reliable)
 	void ServerProxySendGameplayEventToActor(AActor* TargetActor, FGameplayTag Tag, FGameplayEventData EventPayload);
@@ -260,6 +267,13 @@ protected:
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> CrouchStateEffect;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> ClimbStateStartEffect;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> ClimbStateEndEffect;
+
 
 	// Delegates
 protected:

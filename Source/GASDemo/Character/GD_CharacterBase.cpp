@@ -313,6 +313,8 @@ void AGD_CharacterBase::SetupPlayerInputComponent(class UInputComponent* PlayerI
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnAimStarted);
 		EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &AGD_CharacterBase::OnAimEnded);
 
+		//Climb
+		EnhancedInputComponent->BindAction(ClimbAction, ETriggerEvent::Started, this, &AGD_CharacterBase::OnClimbStarted);
 	}
 
 }
@@ -499,8 +501,53 @@ void AGD_CharacterBase::OnAimEnded(const FInputActionValue& Value)
 	}
 }
 
+void AGD_CharacterBase::OnClimbStarted(const FInputActionValue& Value)
+{
+	if(!GDCharacterMovementComponent) return ;
+	if(AbilitySystemComponent)
+	{
+		//获取GE Context的Handle
+		FGameplayEffectContextHandle ClimbStartEffectContext = AbilitySystemComponent->MakeEffectContext();
+		//获取Spec的Handle
+		FGameplayEffectSpecHandle ClimbStartSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ClimbStateStartEffect , 1 ,
+			ClimbStartEffectContext);
+		FActiveGameplayEffectHandle ClimbStartActiveGEHandle;
+
+		//获取GE Context的Handle
+		FGameplayEffectContextHandle ClimbEndEffectContext = AbilitySystemComponent->MakeEffectContext();
+		//获取Spec的Handle
+		FGameplayEffectSpecHandle ClimbEndSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ClimbStateEndEffect , 1 ,
+			ClimbEndEffectContext);
+		FActiveGameplayEffectHandle ClimbEndActiveGEHandle;
+
+		
+		if(!GDCharacterMovementComponent->IsClimbing())
+		{
+			GDCharacterMovementComponent->ToggleClimbing(true);
+			
+			if(GDCharacterMovementComponent->IsClimbing() && ClimbStartSpecHandle.IsValid())
+			{
+				ClimbStartActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*ClimbStartSpecHandle.Data.Get());
+				
+			}
+		
+		}else
+		{
+			GDCharacterMovementComponent->ToggleClimbing(false);
+			
+			if(GDCharacterMovementComponent->IsClimbing() && ClimbEndSpecHandle.IsValid())
+			{
+				ClimbEndActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*ClimbEndSpecHandle.Data.Get());
+				
+			}
+		}
+		
+	}
+	
+}
+
 void AGD_CharacterBase::ServerProxySendGameplayEventToActor_Implementation(AActor* TargetActor, FGameplayTag Tag,
-	FGameplayEventData EventPayload)
+                                                                           FGameplayEventData EventPayload)
 {
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor , Tag , EventPayload);
 }
