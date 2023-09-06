@@ -130,7 +130,7 @@ protected:
 	UPROPERTY(VisibleAnywhere , BlueprintReadOnly , Category= MotionWarp)
 	UGD_MotionWarpingComponent* GDMotionWarpingComponent;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	UGD_CharacterMovementComponent* GDCharacterMovementComponent;
 
 	// 变为布娃娃状态回调函数
@@ -141,6 +141,10 @@ protected:
 	
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
+
+	// 两类移动的输入函数
+	void HandleGroundMovementInput(const FInputActionValue& Value);
+	void HandleClimbMovementInput(const FInputActionValue& Value);
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);

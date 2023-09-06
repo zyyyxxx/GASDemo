@@ -20,6 +20,8 @@ namespace ECustomMovementMode
 struct FGameplayTag;
 class UAbilitySystemComponent;
 class UGameplayAbility;
+class UAnimInstance;
+class UAnimMontage;
 
 UCLASS()
 class GASDEMO_API UGD_CharacterMovementComponent : public UCharacterMovementComponent
@@ -58,6 +60,11 @@ public:
 	bool IsClimbing() const;
 	bool CanStartClimbing();
 
+	FORCEINLINE FVector GetClimbableSurfaceNormal() const{return CurrentClimbableSurfaceNormal;}
+
+	UFUNCTION(BlueprintCallable)
+	FVector GetUnrotatedClimbVelocity() const;
+
 	void StartClimbing();
 	void StopClimbing();
 
@@ -65,6 +72,9 @@ public:
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
+	//Constrain components of root motion velocity that may not be appropriate given the current movement mode (e.g. when falling Z may be ignored).
+	//约束根运动速度的分量，这些分量在给定当前运动模式的情况下可能不合适（例如，当下降时，Z 可能会被忽略）。
+	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
 
 protected:
 	UPROPERTY(EditDefaultsOnly)
@@ -85,10 +95,25 @@ protected:
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
 	float MaxClimbAcceleration = 300.0f;
 	
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	UAnimMontage* IdleToClimbMontage;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	UAnimMontage* ClimbToTopMontage;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> ClimbStateStartEffect;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UGameplayEffect> ClimbStateEndEffect;
+	
 	TArray<FHitResult> ClimbableSurfacesTraceResults;
 
 	FVector CurrentClimbableSurfaceLocation;
 	FVector CurrentClimbableSurfaceNormal;
+
+	UPROPERTY()
+	UAnimInstance* OwningPlayerAnimInstance;
 	
 	TArray<FHitResult> ClimbDoCapsuleTraceMultiByObject(const FVector& Start , const FVector& End ,
 		bool bShowDebugShape = false , bool bDrawPersistantShape = false);
@@ -102,9 +127,25 @@ protected:
 
 	void ProcessClimbableSurfaceInfo();
 
+	bool CheckShouldStopClimbing();
+
+	bool CheckHasReachedFloor();
+	
 	FQuat GetClimbRotation(float DeltaTime);
 
 	void SnapMovementToClimbableSurfaces(float DeltaTime);
+
+	// 攀爬到顶部边缘检测
+	bool CheckHasReachedLedge();
+	
+	void PlayClimbMontage(UAnimMontage* MontageToPlay);
+
+	UFUNCTION()
+	void OnClimbMontageEnded(UAnimMontage* Montage , bool bInterrupted);
+
+	void ApplyClimbStartedGE();
+	void ApplyClimbEndedGE();
+	
 #pragma endregion 
 
 	void HandleMovementDirection();

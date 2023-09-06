@@ -3,6 +3,7 @@
 
 #include "AnimInstances/GD_AnimInstance.h"
 
+#include "ActorComponents/GD_CharacterMovementComponent.h"
 #include "ActorComponents/InventoryComponent.h"
 #include "Animation/AnimSequenceBase.h"
 #include "Character/GD_CharacterBase.h"
@@ -10,6 +11,64 @@
 #include "DataAssets/CharacterDataAsset.h"
 #include "DataAssets/CharacterAnimDataAsset.h"
 #include "Inventory/InventoryItemInstance.h"
+#include "Kismet/KismetMathLibrary.h"
+
+void UGD_AnimInstance::NativeInitializeAnimation()
+{
+	Super::NativeInitializeAnimation();
+	GD_Character = Cast<AGD_CharacterBase>(TryGetPawnOwner());
+	if(GD_Character)
+	{
+		GDMovementComponent = GD_Character->GetGD_CharacterMovementComponent();
+	}
+	
+}
+
+void UGD_AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+{
+	Super::NativeUpdateAnimation(DeltaSeconds);
+	if(!GD_Character || !GDMovementComponent) return;
+
+	GetGroundSpeed();
+	GetAirSpeed();
+	GetShouldMove();
+	GetIsFalling();
+	GetIsClimbing();
+	GetClimbVelocity();
+	
+}
+
+void UGD_AnimInstance::GetGroundSpeed()
+{
+	GroundSpeed = UKismetMathLibrary::VSizeXY(GD_Character->GetVelocity());
+}
+
+void UGD_AnimInstance::GetAirSpeed()
+{
+	AirSpeed = GD_Character->GetVelocity().Z;
+}
+
+void UGD_AnimInstance::GetShouldMove()
+{
+	bShouldMove = GDMovementComponent->GetCurrentAcceleration().Size() > 0 && GroundSpeed > 5.f && !bIsFalling;
+}
+
+void UGD_AnimInstance::GetIsFalling()
+{
+	bIsFalling = GDMovementComponent->IsFalling();
+}
+
+
+void UGD_AnimInstance::GetIsClimbing()
+{
+	bIsClimbing = GDMovementComponent->IsClimbing(); 
+}
+
+
+void UGD_AnimInstance::GetClimbVelocity()
+{
+	ClimbVelocity = GDMovementComponent->GetUnrotatedClimbVelocity();
+}
 
 const UItemStaticData* UGD_AnimInstance::GetEquippedItemData() const
 {

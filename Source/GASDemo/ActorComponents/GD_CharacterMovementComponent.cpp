@@ -9,7 +9,10 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "MotionWarpingComponent.h"
+#include "Character/GD_CharacterBase.h"
 #include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMaterialLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
 
 static TAutoConsoleVariable<int32> CVarShowTraversal(
 	TEXT("ShowDebugTraversal"),
@@ -20,31 +23,21 @@ static TAutoConsoleVariable<int32> CVarShowTraversal(
 	ECVF_Cheat
 );
 
-bool UGD_CharacterMovementComponent::TryTraversal(UAbilitySystemComponent* ASC)
-{
-	for(TSubclassOf<UGameplayAbility> AbilityClass : TraversalAbilitiesOrdered)
-	{
-		// 按顺序尝试 Vault 和 Jump
-		if(ASC->TryActivateAbilityByClass(AbilityClass , true))
-		{
-			FGameplayAbilitySpec* Spec;
-
-			Spec = ASC->FindAbilitySpecFromClass(AbilityClass);
-			if(Spec && Spec->IsActive())
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 void UGD_CharacterMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	HandleMovementDirection();
+	// 攀爬动画相关
+	OwningPlayerAnimInstance = CharacterOwner->GetMesh()->GetAnimInstance();
+	if(OwningPlayerAnimInstance)
+	{
+		OwningPlayerAnimInstance->OnMontageEnded.AddDynamic(this , &UGD_CharacterMovementComponent::OnClimbMontageEnded);
+		OwningPlayerAnimInstance->OnMontageBlendingOut.AddDynamic(this , &UGD_CharacterMovementComponent::OnClimbMontageEnded);
+	}
 
+	// GAS与Strafe相关
+	HandleMovementDirection();
+	 
 	if(UAbilitySystemComponent* AbilitySystemComponent = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner()))
 	{
 		/** Allow events to be registered for specific gameplay tags being added or removed */
@@ -55,6 +48,18 @@ void UGD_CharacterMovementComponent::BeginPlay()
 	}
 	
 }
+
+
+void UGD_CharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	//UE_LOG(LogTemp , Warning , TEXT("%d") , MovementMode.GetValue());
+	//TraceClimbableSurfaces();
+	//TraceFromEyeHeight(100.f);
+}
+
+/* ---------------------Strafe------------------------*/
 
 void UGD_CharacterMovementComponent::OnEnforcedStrafeTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
 {
@@ -67,33 +72,32 @@ void UGD_CharacterMovementComponent::OnEnforcedStrafeTagChanged(const FGameplayT
 	}
 }
 
-void UGD_CharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	//UE_LOG(LogTemp , Warning , TEXT("%d") , MovementMode.GetValue());
-	//TraceClimbableSurfaces();
-	//TraceFromEyeHeight(100.f);
-}
-
+/*----------------------Climb---------------------*/
 void UGD_CharacterMovementComponent::ToggleClimbing(bool bEnableClimb)
 {
+	
 	if(bEnableClimb)
 	{
 		if(CanStartClimbing())
 		{
 			// 开启攀爬状态
-			StartClimbing();
-			UE_LOG(LogTemp, Warning, TEXT("Start Climb!"), );
+			PlayClimbMontage(IdleToClimbMontage);
+			//StartClimbing();
+			ApplyClimbStartedGE();
+			Debug::Print(TEXT("Start Climb!"));
+			
 		}else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Cannot Climb!"), );
+			Debug::Print(TEXT("Cannot Climb!"));
+			
 		}
 	}else
 	{
 		// 关闭攀爬
 		StopClimbing();
-		UE_LOG(LogTemp, Warning, TEXT("Stop Climb!"), );
+
+		ApplyClimbEndedGE();
+		Debug::Print(TEXT("Stop Climb!"));
 	}
 }
 
@@ -109,6 +113,11 @@ bool UGD_CharacterMovementComponent::CanStartClimbing()
 	if(!TraceFromEyeHeight(100.f).bBlockingHit) return false;
 
 	return true;
+}
+
+FVector UGD_CharacterMovementComponent::GetUnrotatedClimbVelocity() const
+{
+	return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat() , Velocity);
 }
 
 void UGD_CharacterMovementComponent::StartClimbing()
@@ -155,29 +164,6 @@ void UGD_CharacterMovementComponent::PhysCustom(float deltaTime, int32 Iteration
 	
 }
 
-float UGD_CharacterMovementComponent::GetMaxSpeed() const
-{
-	if(IsClimbing())
-	{
-		return MaxClimbSpeed;
-	}else
-	{
-		return Super::GetMaxSpeed();	
-	}
-	
-}
-
-float UGD_CharacterMovementComponent::GetMaxAcceleration() const
-{
-	if(IsClimbing())
-	{
-		return MaxClimbAcceleration;
-	}else
-	{
-		return Super::GetMaxAcceleration();	
-	}
-}
-
 void UGD_CharacterMovementComponent::PhysClimb(float deltaTime, int32 Iterations)
 {
 	if (deltaTime < MIN_TICK_TIME)
@@ -188,9 +174,14 @@ void UGD_CharacterMovementComponent::PhysClimb(float deltaTime, int32 Iterations
 	// 获取所有的可攀爬表面信息
 	TraceClimbableSurfaces();
 	ProcessClimbableSurfaceInfo();
+
+	
 	
 	// 检查我们是否需要停止攀爬
-
+	if(CheckShouldStopClimbing() || CheckHasReachedFloor())
+	{
+		StopClimbing();
+	}
 	
 	RestorePreAdditiveRootMotionVelocity();
 
@@ -224,6 +215,13 @@ void UGD_CharacterMovementComponent::PhysClimb(float deltaTime, int32 Iterations
 
 	// 将角色运动附着到可攀爬表面
 	SnapMovementToClimbableSurfaces(deltaTime);
+
+	if(CheckHasReachedLedge())
+	{
+		
+		ApplyClimbEndedGE();
+		PlayClimbMontage(ClimbToTopMontage);
+	}
 	
 }
 
@@ -244,6 +242,46 @@ void UGD_CharacterMovementComponent::ProcessClimbableSurfaceInfo()
 	CurrentClimbableSurfaceNormal = CurrentClimbableSurfaceNormal.GetSafeNormal();
 }
 
+bool UGD_CharacterMovementComponent::CheckShouldStopClimbing()
+{
+	if(ClimbableSurfacesTraceResults.IsEmpty()) return true;
+
+	// 攀爬平面法线方向与垂直方向夹角
+	const float DotResult = FVector::DotProduct(CurrentClimbableSurfaceNormal , FVector::UpVector);
+	const float DegressDiff = FMath::RadiansToDegrees(FMath::Acos(DotResult));
+
+	if(DegressDiff <= 60.f)
+	{
+		return true;
+	}
+	return false;
+	
+}
+
+bool UGD_CharacterMovementComponent::CheckHasReachedFloor()
+{
+	const FVector DownVector = -UpdatedComponent->GetUpVector();
+	const FVector StartOffset = DownVector * 50.f;
+
+	const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
+	const FVector End = Start + DownVector;
+
+	TArray<FHitResult> PossibleFloorHits =  ClimbDoCapsuleTraceMultiByObject(Start , End , true);
+	if(PossibleFloorHits.IsEmpty()) return false;
+
+	for(const auto& PossibleFloorHit:PossibleFloorHits)
+	{
+		// 检测到地面法线，并且在向下运动
+		const bool bFloorReached = FVector::Parallel(-PossibleFloorHit.ImpactNormal , FVector::UpVector) && GetUnrotatedClimbVelocity().Z < -10.f;
+		if(bFloorReached)
+		{
+			return true;
+		}
+		
+	}
+	return false;
+}
+
 FQuat UGD_CharacterMovementComponent::GetClimbRotation(float DeltaTime)
 {
 	const FQuat CurrentQuat = UpdatedComponent->GetComponentQuat();
@@ -256,6 +294,43 @@ FQuat UGD_CharacterMovementComponent::GetClimbRotation(float DeltaTime)
 	// 插值
 	return FMath::QInterpTo(CurrentQuat , TargetQuat , DeltaTime , 5.f);
 }
+
+float UGD_CharacterMovementComponent::GetMaxSpeed() const
+{
+	if(IsClimbing())
+	{
+		return MaxClimbSpeed;
+	}else
+	{
+		return Super::GetMaxSpeed();	
+	}
+	
+}
+
+float UGD_CharacterMovementComponent::GetMaxAcceleration() const
+{
+	if(IsClimbing())
+	{
+		return MaxClimbAcceleration;
+	}else
+	{
+		return Super::GetMaxAcceleration();	
+	}
+}
+
+FVector UGD_CharacterMovementComponent::ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity,
+	const FVector& CurrentVelocity) const
+{
+	const bool bIsPlayingRMMontage = IsFalling() && OwningPlayerAnimInstance && OwningPlayerAnimInstance->IsAnyMontagePlaying();
+	if(bIsPlayingRMMontage)
+	{
+		return RootMotionVelocity;
+	}else
+	{
+		return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity, CurrentVelocity);
+	}
+}
+
 
 void UGD_CharacterMovementComponent::SnapMovementToClimbableSurfaces(float DeltaTime)
 {
@@ -277,6 +352,28 @@ void UGD_CharacterMovementComponent::SnapMovementToClimbableSurfaces(float Delta
 		UpdatedComponent->GetComponentQuat(),
 		true);
 	
+}
+
+bool UGD_CharacterMovementComponent::CheckHasReachedLedge()
+{
+	// 水平检测是否有空间
+	FHitResult LedgeHitResult = TraceFromEyeHeight(100.f  ,  50.f);
+
+	if(!LedgeHitResult.bBlockingHit)
+	{
+		//竖直检测攀爬到顶部是否可站立
+		const FVector WalkableSurfaceTraceStart = LedgeHitResult.TraceEnd;
+		const FVector DownVector = -UpdatedComponent->GetUpVector();
+		
+		const FVector WalkableSurfaceTraceEnd = WalkableSurfaceTraceStart + DownVector * 100.f;
+		FHitResult WalkableSurfaceHitResult = ClimbDoLineTraceSingleByObject(WalkableSurfaceTraceStart , WalkableSurfaceTraceEnd , true);
+
+		if(WalkableSurfaceHitResult.bBlockingHit && GetUnrotatedClimbVelocity().Z > 10.f)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 FHitResult UGD_CharacterMovementComponent::ClimbDoLineTraceSingleByObject(const FVector& Start, const FVector& End,
@@ -348,7 +445,7 @@ bool UGD_CharacterMovementComponent::TraceClimbableSurfaces()
 	const FVector Start = UpdatedComponent->GetComponentLocation() + StartOffset;
 	const FVector End = Start + UpdatedComponent->GetForwardVector();
 	
-	ClimbableSurfacesTraceResults = ClimbDoCapsuleTraceMultiByObject(Start , End , true , true);
+	ClimbableSurfacesTraceResults = ClimbDoCapsuleTraceMultiByObject(Start , End , true , false);
 
 	return !ClimbableSurfacesTraceResults.IsEmpty();
 }
@@ -361,8 +458,95 @@ FHitResult UGD_CharacterMovementComponent::TraceFromEyeHeight(float TraceDistanc
 	const FVector Start = ComponentLocation + EyeHeightOffset;
 	const FVector End = Start + UpdatedComponent->GetForwardVector() * TraceDistance;
 
-	return ClimbDoLineTraceSingleByObject(Start, End, true , true);
+	return ClimbDoLineTraceSingleByObject(Start, End, true , false);
 }
+
+
+void UGD_CharacterMovementComponent::PlayClimbMontage(UAnimMontage* MontageToPlay)
+{
+	if(!MontageToPlay || !OwningPlayerAnimInstance || OwningPlayerAnimInstance->IsAnyMontagePlaying()) return;
+	
+	OwningPlayerAnimInstance->Montage_Play(MontageToPlay);
+}
+
+void UGD_CharacterMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	if(Montage == IdleToClimbMontage)
+	{
+		//蒙太奇结束 进入攀爬状态
+		StartClimbing();
+	}else
+	{
+		// 攀爬到顶部 进入步行模式
+		SetMovementMode(MOVE_Walking);
+	}
+}
+
+void UGD_CharacterMovementComponent::ApplyClimbStartedGE()
+{
+	AGD_CharacterBase* Character = Cast<AGD_CharacterBase>(GetPawnOwner());
+	if(!Character) return;
+	UAbilitySystemComponent* AbilitySystemComponent= Character->GetAbilitySystemComponent();
+
+	if(AbilitySystemComponent)
+	{
+		//获取GE Context的Handle
+		FGameplayEffectContextHandle ClimbStartEffectContext = AbilitySystemComponent->MakeEffectContext();
+		//获取Spec的Handle
+		FGameplayEffectSpecHandle ClimbStartSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ClimbStateStartEffect , 1 ,
+			ClimbStartEffectContext);
+		FActiveGameplayEffectHandle ClimbStartActiveGEHandle;
+
+		if(ClimbStartSpecHandle.IsValid())
+		{
+			ClimbStartActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*ClimbStartSpecHandle.Data.Get());
+				
+		}
+	}
+}
+
+void UGD_CharacterMovementComponent::ApplyClimbEndedGE()
+{
+	AGD_CharacterBase* Character = Cast<AGD_CharacterBase>(GetPawnOwner());
+	if(!Character) return;
+	UAbilitySystemComponent* AbilitySystemComponent= Character->GetAbilitySystemComponent();
+	
+	//获取GE Context的Handle
+	FGameplayEffectContextHandle ClimbEndEffectContext = AbilitySystemComponent->MakeEffectContext();
+	//获取Spec的Handle
+	FGameplayEffectSpecHandle ClimbEndSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ClimbStateEndEffect , 1 ,
+		ClimbEndEffectContext);
+	FActiveGameplayEffectHandle ClimbEndActiveGEHandle;
+
+	if(ClimbEndSpecHandle.IsValid())
+	{
+		ClimbEndActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToSelf(*ClimbEndSpecHandle.Data.Get());
+				
+	}
+}
+
+
+/*------------Wall Run--------------*/
+
+bool UGD_CharacterMovementComponent::TryTraversal(UAbilitySystemComponent* ASC)
+{
+	for(TSubclassOf<UGameplayAbility> AbilityClass : TraversalAbilitiesOrdered)
+	{
+		// 按顺序尝试 Vault 和 Jump
+		if(ASC->TryActivateAbilityByClass(AbilityClass , true))
+		{
+			FGameplayAbilitySpec* Spec;
+
+			Spec = ASC->FindAbilitySpecFromClass(AbilityClass);
+			if(Spec && Spec->IsActive())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 
 void UGD_CharacterMovementComponent::HandleMovementDirection()
 {

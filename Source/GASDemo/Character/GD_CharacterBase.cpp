@@ -343,8 +343,21 @@ void AGD_CharacterBase::StartRagDoll()
 
 void AGD_CharacterBase::Move(const FInputActionValue& Value)
 {
+	if(!GDCharacterMovementComponent) return;
+	if(GDCharacterMovementComponent->IsClimbing())
+	{
+		HandleClimbMovementInput(Value);
+	}else
+	{
+		HandleGroundMovementInput(Value);
+	}
+	
+}
+
+void AGD_CharacterBase::HandleGroundMovementInput(const FInputActionValue& Value)
+{
 	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
@@ -362,6 +375,26 @@ void AGD_CharacterBase::Move(const FInputActionValue& Value)
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
+}
+
+void AGD_CharacterBase::HandleClimbMovementInput(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	//攀爬竖直移动方向
+	const FVector ForwardDirection = FVector::CrossProduct(
+		-GDCharacterMovementComponent->GetClimbableSurfaceNormal(),GetActorRightVector());
+
+	//攀爬水平移动方向
+	const FVector RightDirection = FVector::CrossProduct(
+		-GDCharacterMovementComponent->GetClimbableSurfaceNormal(),-GetActorUpVector());
+	
+	// add movement 
+	AddMovementInput(ForwardDirection, MovementVector.Y);
+	AddMovementInput(RightDirection, MovementVector.X);
+	
+	
 }
 
 void AGD_CharacterBase::Look(const FInputActionValue& Value)
