@@ -86,10 +86,15 @@ void UGD_CharacterMovementComponent::ToggleClimbing(bool bEnableClimb)
 			ApplyClimbStartedGE();
 			Debug::Print(TEXT("Start Climb!"));
 			
+		}else if(CanClimbDownLedge())
+		{
+			PlayClimbMontage(ClimbDownLedgeMontage);
+			ApplyClimbStartedGE();
+			Debug::Print(TEXT("Can Climb Down") , FColor::Cyan	,1);
+			
 		}else
 		{
-			Debug::Print(TEXT("Cannot Climb!"));
-			
+			Debug::Print(TEXT("Can Not Climb Down") , FColor::Red	,1);
 		}
 	}else
 	{
@@ -376,6 +381,31 @@ bool UGD_CharacterMovementComponent::CheckHasReachedLedge()
 	return false;
 }
 
+bool UGD_CharacterMovementComponent::CanClimbDownLedge()
+{
+	if(IsFalling()) return false;
+	const FVector ComponentLocation = UpdatedComponent->GetComponentLocation();
+	const FVector ForwardVector = UpdatedComponent->GetForwardVector();
+	const FVector DownVector = -UpdatedComponent->GetUpVector();
+
+	const FVector WalkableSurfaceTraceStart = ComponentLocation * ForwardVector * ClimbDownWalkableSurfaceTraceOffset;
+	const FVector WalkableSurfaceTraceEnd = WalkableSurfaceTraceStart * DownVector * 100.f;
+
+	// 较近的向下检测
+	FHitResult WalkableSurfaceHit = ClimbDoLineTraceSingleByObject(WalkableSurfaceTraceStart, WalkableSurfaceTraceEnd , true);
+	// 较远的向下检测
+	const FVector LedgeTraceStart = WalkableSurfaceHit.TraceStart + ForwardVector * ClimbDownLedgeTraceOffset;
+	const FVector LedgeTraceEnd = LedgeTraceStart + DownVector * 200.f;
+	FHitResult LedgeTraceHit = ClimbDoLineTraceSingleByObject(LedgeTraceStart, LedgeTraceEnd , true);
+
+	if(WalkableSurfaceHit.bBlockingHit && !LedgeTraceHit.bBlockingHit)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 FHitResult UGD_CharacterMovementComponent::ClimbDoLineTraceSingleByObject(const FVector& Start, const FVector& End,
                                                                           bool bShowDebugShape,bool bDrawPersistantShape)
 {
@@ -471,12 +501,15 @@ void UGD_CharacterMovementComponent::PlayClimbMontage(UAnimMontage* MontageToPla
 
 void UGD_CharacterMovementComponent::OnClimbMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	if(Montage == IdleToClimbMontage)
+	if(Montage == IdleToClimbMontage || Montage == ClimbDownLedgeMontage)
 	{
 		//蒙太奇结束 进入攀爬状态
 		StartClimbing();
-	}else
-	{
+		//消除蒙太奇的速度	
+		StopMovementImmediately();
+	}
+	
+	if(Montage == ClimbToTopMontage){
 		// 攀爬到顶部 进入步行模式
 		SetMovementMode(MOVE_Walking);
 	}

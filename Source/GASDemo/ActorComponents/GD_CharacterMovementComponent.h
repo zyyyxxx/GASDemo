@@ -101,6 +101,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
 	UAnimMontage* ClimbToTopMontage;
 
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	UAnimMontage* ClimbDownLedgeMontage;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float ClimbDownWalkableSurfaceTraceOffset = 50.f;
+
+	UPROPERTY(EditDefaultsOnly , BlueprintReadOnly , Category= "Climb")
+	float ClimbDownLedgeTraceOffset = 50.f;
+	
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayEffect> ClimbStateStartEffect;
 
@@ -134,15 +143,18 @@ protected:
 	FQuat GetClimbRotation(float DeltaTime);
 
 	void SnapMovementToClimbableSurfaces(float DeltaTime);
-
+	
 	// 攀爬到顶部边缘检测
 	bool CheckHasReachedLedge();
+
+	// 顶部向下攀爬检测
+	bool CanClimbDownLedge();
 	
 	void PlayClimbMontage(UAnimMontage* MontageToPlay);
 
 	UFUNCTION()
 	void OnClimbMontageEnded(UAnimMontage* Montage , bool bInterrupted);
-
+	
 	void ApplyClimbStartedGE();
 	void ApplyClimbEndedGE();
 	
