@@ -72,3 +72,5 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+.idea/.idea.GASDemo/.idea/projectSettingsUpdater.xml
+.idea/.idea.GASDemo/.idea/workspace.xml
